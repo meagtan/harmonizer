@@ -39,7 +39,7 @@ def inferchords(notes, key = None, voice = None, vel = None): # TODO generalize 
             if newitem not in probs or newprob > probs[newitem]:
                 probs[newitem] = newprob
                 preds[newitem] = i, c, k
-                hp.heappush(openset, (newprob, newitem))
+                hp.heappush(openset, (-newprob, newitem))
     return None
 
 def cprob(c, k, c1 = None, vel = None):
