@@ -34,10 +34,27 @@ def inferchords(notes, key = None, voice = None, vel = None): # TODO generalize 
             return k, res 
         
         for c1 in chords(notes[i+1]):
-            newprob = probs[i, c, k] * cprob(c1, k, c, vel) * nprob(notes[i+1], c, k, voice, notes[i], vel)
+            newprob = probs[i, c, k] * cprob(c1, k, c, vel) * nprob(notes[i+1], c1, k, voice, notes[i], c, vel)
             newitem = (i + 1, c1, k)
             if newitem not in probs or newprob > probs[newitem]:
                 probs[newitem] = newprob
                 preds[newitem] = i, c, k
                 hp.heappush(openset, (newprob, newitem))
     return None
+
+def cprob(c, k, c1 = None, vel = None):
+    '''
+    cprob(c, k, c1 = None, vel = None)
+    Returns the probability that chord c will occur in key k, optionally after chord c1 and with harmonic velocity vel.
+    '''
+    # TODO compute P(Trans(Func(c, k), Func(c1, k))[| vel])
+    pass
+
+def nprob(n, c, k, voice = None, n1 = None, c1 = None, vel = None):
+    '''
+    nprob(n, c, k, voice = None, n1 = None, c1 = None, vel = None)
+    Returns the probability that note n will occur in the given voice of chord c and key k, 
+    optionally after note n1 in chord c1 and with harmonic velocity vel.
+    '''
+    # TODO compute P(Pitch(n, c) | Pitch(n1, c1), voice, Trans(Func(c1, k), Func(c, k)), vel)
+    pass
