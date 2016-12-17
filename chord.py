@@ -15,8 +15,8 @@ def inferchords(notes, key = None, voice = None, vel = None): # TODO generalize 
     preds  = {}
     length = len(notes)
     
-    for c, k in chords(notes[0], key): # should iterate through all keys if key None, else just k
-        probs[c, k, 0] = cprob(c, k) * nprob(notes[0], c, k, voice) # perhaps move cprob to chords
+    for c, k, p in chords(notes[0], key, voice): # should iterate through all keys if key None, else just k
+        probs[c, k, 0] = p # cprob(c, k) * nprob(notes[0], c, k, voice) # perhaps move cprob to chords
     
     for i in xrange(1, length):
         bestprob = 0
@@ -90,4 +90,13 @@ def nprob(n, c, k, voice = None, n1 = None, c1 = None, vel = None):
     optionally after note n1 in chord c1 and with harmonic velocity vel.
     '''
     # TODO compute P(Pitch(n, c) | Pitch(n1, c1), voice, Trans(Func(c1, k), Func(c, k)), vel)
+    pass
+
+def chords(note, key = None, voice = None):
+    '''
+    chords(note, key = None, voice = None)
+    Iterates through all chords that contain note, optionally in a given key or voice.
+    Returns a generator of tuples of type (Chord, Key, Probability).
+    '''
+    # probability = cprob(chord, key) * nprob(note, chord, key, voice)
     pass
