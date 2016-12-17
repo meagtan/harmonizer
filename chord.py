@@ -21,7 +21,7 @@ def inferchords(notes, key = None, voice = None, vel = None): # TODO generalize 
     for i in xrange(1, length):
         bestprob = 0
         best = None
-        for c, k in chords(notes[i], key):
+        for c, k, _ in chords(notes[i], key, voice):
             # find max and arg max of transition
             for c1, _ in chords(notes[i-1], k):
                 newprob = probs[c1, k, i - 1] * cprob(c1, k, c, vel) * nprob(notes[i], c1, k, voice, notes[i-1], c, vel)
@@ -35,12 +35,12 @@ def inferchords(notes, key = None, voice = None, vel = None): # TODO generalize 
     
     # construct chords
     c, k = best
-    chords = [c]
+    chors = [c]
     for i in xrange(length - 1, 0, -1):
         c = preds[c, k, i]
-        chords.append(c)
+        chors.append(c)
     
-    return k, chords
+    return k, chors, bestprob
     
 #   # Dijkstra's algorithm, modified to change (min,+) into (max,*) for distances
 #   openset = []
