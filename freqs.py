@@ -19,6 +19,7 @@ class Env:
         self.tfreq = Freq() # freqs of each chord transition
         self.nfreq = Freq() # freqs of each note function in each chord function
         self.vfreq = Freq() # freqs of each note transition
+        # TODO process every sample, or write a method for it
     
     def process(self, sample):
         'Update probabilities based on sample sequence of chords.'
@@ -35,23 +36,32 @@ class Env:
     # TODO memoize the following
     
     def cprob(self, c, k):
-        return self.cfreq[func(c, k)]
+        return self.cfreq[Func(c, k)]
     
-    def nprob(self, n, c, k, v):
-        f = func(c, k)
+    def nprob(self, n, c, k, v = None): # TODO normalize over voices
+        f = Func(c, k)
         return self.nfreq[Tone(n, c, v), f] / self.cprob(c, k) if self.cprob(c, k) else 0
     
     def tprob(self, c1, c, k, vel):
-        f, f1 = func(c, k), func(c1, k)
+        f, f1 = Func(c, k), Func(c1, k)
         res = 0
         for s in samples(vel):
             res += self.tfreq[f1, f, s] / self.cfreq[f, s] if self.cfreq[f, s] else 0 # TODO encapsulate, perhaps create numeric class and override operators, also including normalization and quotients
         return res # TODO normalize over f1
     
     def vprob(self, n1, n, c1, c, k, v, vel):
-        f, f1 = func(c, k), func(c1, k)
-        t, t1 = note(f, v), note(f1, v)
+        f, f1 = Func(c, k), Func(c1, k)
+        t, t1 = Tone(f, v), Tone(f1, v)
         res = 0
         for s in samples(vel):
             res += self.vfreq[t1, t, f1, f, s] * self.cfreq[f, s] / (self.nfreq[t, f, s] * self.tfreq[f1, f, s])
         return res
+    
+    def samples(self, vel):
+        pass
+
+class Func:
+    pass
+
+class Tone:
+    pass

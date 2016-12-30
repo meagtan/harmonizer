@@ -1,6 +1,8 @@
-import probs
+import freqs
 import heapq as hp
 from collections import defaultdict
+
+table = freqs.Env()
 
 def inferchords(notes, key = None, voice = None, vel = None): # TODO generalize as kwargs
     '''
@@ -80,8 +82,11 @@ def cprob(c, k, c1 = None, vel = None):
     cprob(c, k, c1 = None, vel = None)
     Returns the probability that chord c will occur in key k, optionally after chord c1 and with harmonic velocity vel.
     '''
-    # TODO compute P(Trans(Func(c, k), Func(c1, k))[| vel])
-    pass
+    # compute P(Trans(Func(c, k), Func(c1, k))[| vel])
+    # TODO normalize over None variables instead, or move that to freqs
+    if not c1 or not vel:
+        return table.cprob(c, k)
+    return table.tprob(c, k, c1, vel)
 
 def nprob(n, c, k, voice = None, n1 = None, c1 = None, vel = None):
     '''
@@ -89,8 +94,10 @@ def nprob(n, c, k, voice = None, n1 = None, c1 = None, vel = None):
     Returns the probability that note n will occur in the given voice of chord c and key k, 
     optionally after note n1 in chord c1 and with harmonic velocity vel.
     '''
-    # TODO compute P(Pitch(n, c) | Pitch(n1, c1), voice, Trans(Func(c1, k), Func(c, k)), vel)
-    pass
+    # compute P(Pitch(n, c) | Pitch(n1, c1), voice, Trans(Func(c1, k), Func(c, k)), vel)
+    if not n1 or not c1 or not vel:
+        return table.nprob(n, c, k, voice)
+    return table.vprob(n, n1, c, c1, k, voice, vel)
 
 def chords(note, key = None, voice = None):
     '''
@@ -99,4 +106,11 @@ def chords(note, key = None, voice = None):
     Returns a generator of tuples of type (Chord, Key, Probability).
     '''
     # probability = cprob(chord, key) * nprob(note, chord, key, voice)
-    pass
+    def prob(c, n, k, v):
+        return cprob(c, k) * nprob(n, c, k, v)
+    
+    for k in ([key] if key else keys): # TODO keys list
+        for c in chords: # TODO chords list
+            p = prob(c, note, key, voice)
+            if p > threshold: # TODO constant threshold
+                yield c, k, p
