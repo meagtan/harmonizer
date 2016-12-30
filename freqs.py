@@ -5,7 +5,9 @@ class Freq:
     def __init__(self):
         self.table = {}
         self.cnt = 0
-    def __getitem__(self, item): # TODO include separate samples
+    def __getitem__(self, item): 
+        # TODO include separate samples and sum over None elements of item, including in Func and Tone
+        #  In order to do that, perhaps have a nested table forming a tree, where each branch corresponds to a characteristic
         return self.table[item] / self.cnt if self.cnt and item in self.table else 0
     def __setitem__(self, item, value): # TODO include separate samples
         self.cnt += value - self.table[item]
@@ -38,7 +40,7 @@ class Env:
     def cprob(self, c, k):
         return self.cfreq[Func(c, k)]
     
-    def nprob(self, n, c, k, v = None): # TODO normalize over voices
+    def nprob(self, n, c, k, v = None):
         f = Func(c, k)
         return self.nfreq[Tone(n, c, v), f] / self.cprob(c, k) if self.cprob(c, k) else 0
     
@@ -46,7 +48,8 @@ class Env:
         f, f1 = Func(c, k), Func(c1, k)
         res = 0
         for s in samples(vel):
-            res += self.tfreq[f1, f, s] / self.cfreq[f, s] if self.cfreq[f, s] else 0 # TODO encapsulate, perhaps create numeric class and override operators, also including normalization and quotients
+            res += self.tfreq[f1, f, s] / self.cfreq[f, s] if self.cfreq[f, s] else 0 
+            # TODO encapsulate, perhaps create numeric class and override operators, also including normalization and quotients
         return res # TODO normalize over f1
     
     def vprob(self, n1, n, c1, c, k, v, vel):
