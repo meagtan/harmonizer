@@ -1,4 +1,4 @@
-import music21
+import probs
 import heapq as hp
 from collections import defaultdict
 
