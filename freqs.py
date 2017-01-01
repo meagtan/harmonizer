@@ -71,7 +71,9 @@ class Freq:
         return self.table[None]
     
 class Env:
-    
+    '''
+    Program environment containing probabilities for each chord, note and transition, acquired from sample chorales.
+    '''
     def __init__(self):
         # Frequency tables
         self.cfreq = Freq() # freqs of each chord function
@@ -83,47 +85,65 @@ class Env:
     def process(self, sample):
         'Update probabilities based on sample sequence of chords.'
         cs = sample.funcs()
-        for curr, prev in zip(cs, cs[1:]):
-            self.cfreq[curr] += 1       
-            self.tfreq[curr, prev] += 1 
+        for curr, prev in zip(cs, [None] + cs[1:]):
+            self.cfreq[curr, sample] += 1       
+            self.tfreq[curr, prev, sample] += 1 
             for voice in voices(curr):
-                self.nfreq[note(curr, voice), curr, voice] += 1 # TODO also add sample
-                self.vfreq[note(curr, voice), note(pred, voice), curr, pred, voice] += 1
-        # TODO this should not count across all samples, but calculate probabilities
-        #  based on sums across all samples
+                # TODO note(chord, voice) returns note of chord in voice
+                self.nfreq[note(curr, voice), curr, voice, sample] += 1
+                self.vfreq[note(curr, voice), note(pred, voice), curr, pred, voice, sample] += 1
     
     # TODO memoize the following
     
     def cprob(self, c, k):
+        'cprob(c, k) -> Return probability of chord c occurring in key k.'
         return self.cfreq[Func(c, k)]
     
     def nprob(self, n, c, k, v = None):
-        f = Func(c, k)
-        return self.nfreq[Tone(n, c), f, v] / self.cprob(c, k)
+        'nprob(n, c, k[, v]) -> Return probability of note n occurring in voice v of chord c in key k.'
+        return self.nfreq[Tone(n, c), Func(c, k), v] / self.cprob(c, k)
     
-    def tprob(self, c1, c, k, vel):
+    def tprob(self, c1, c, k, vel = None):
+        'tprob(c1, c, k[, vel]) -> Return probability of chord c changing to chord c1 in key k under harmonic velocity vel.'
         f, f1 = Func(c, k), Func(c1, k)
         return sum(self.tfreq[f1, f, s] / self.cfreq[f, s] for s in samples(vel)) # TODO normalize over f1
     
-    def vprob(self, n1, n, c1, c, k, v, vel):
+    def vprob(self, n1, n, c1, c, k, v = None, vel = None):
+        '''vprob(n1, n, c1, c, k[, v, vel]) -> 
+        Return probability of note n in chord c changing to note n1 in chord c1 
+        in key k and voice v under harmonic velocity vel.'''
         f, f1 = Func(c, k), Func(c1, k)
         t, t1 = Tone(n, f), Tone(n1, f1)
         return sum(self.vfreq[t1, t, f1, f, v, s] * self.cfreq[f, s] / (self.nfreq[t, f, v, s] * self.tfreq[f1, f, s]) 
                    for s in samples(vel))
     
-    def samples(self, vel):
+    def samples(self, vel = None):
         pass
 
 class Func(int):
+    '''
+    Stores the diatonic function of a chord in a key, e.g. Func(A7, Dm) represents dominant major in a minor key.
+    '''
     def __new__(cls, chord, key):
         self = int.__new__(cls, (chord.root().diatonicNoteNum - key.tonic.diatonicNoteNum) % 7 + 1)
         self.mod = chord.quality, key.mode
         return self
+    pass
 
 class Tone(int):
+    '''
+    Stores the tone of a note in a chord, e.g. Tone(C, DM) returns 7.
+    '''
     def __new__(cls, note, func):
         self = int.__new__(cls, (note.diatonicNoteNum - chord.root().diatonicNoteNum) % 7 + 1)
         return self
+    pass
 
 class Sample:
+    '''
+    A processed sample chorale containing a list of chords, with optionally specified harmonic velocity.
+    '''
+    def funcs(self):
+        'Return list of chord functions in sample.'
+        pass
     pass
