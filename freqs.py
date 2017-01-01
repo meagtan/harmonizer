@@ -1,4 +1,4 @@
-import music21
+from music21     import *
 from fractions   import Fraction
 from collections import defaultdict
 
@@ -83,8 +83,16 @@ class Env:
         self.vfreq = Freq() # note transition                       Tone, Tone, Func, Func, Voice, Sample
         self.samples = defaultdict(set)
     
+    def train(self, filenames):
+        'Train probabilities from given iterator of filenames, for example corpus.getBachChorales().'
+        for f in filenames:
+            self.process(Sample(f))
+    
     def process(self, sample):
         'Update probabilities based on a sample sequence of chords.'
+        if sample in self.samples[None]:
+            return
+        
         vel = sample.vel
         key = sample.key
         cs  = sample.chords()
@@ -99,7 +107,7 @@ class Env:
             self.cfreq[f, sample] += 1       
             self.tfreq[f, f1, sample] += 1 
             for voice in voices(curr): # TODO voices(chord) generates each voice of chord
-                n, n1 = note(curr, voice), note(prev, voice)
+                n, n1 = note(curr, voice), note(prev, voice) # what if multiple notes are played on the same chord? consider ties
                 # TODO note(chord, voice) returns note of chord in voice
                 self.nfreq[n, f, voice, sample] += 1
                 self.vfreq[n, n1, f, f1, voice, sample] += 1
@@ -151,6 +159,13 @@ class Sample:
     '''
     A processed sample chorale containing a list of chords, with optionally specified harmonic velocity.
     '''
+    def __init__(self, filename):
+        cs = corpus.parse(filename).chordify()
+        # TODO set key, vel
+        for c in cs:
+            # parse each chord as a list of notes, keeping ties in mind
+            pass
+    
     def chords(self):
         'Return list of chords in sample.'
         pass
