@@ -103,19 +103,13 @@ class Env:
     
     def tprob(self, c1, c, k, vel):
         f, f1 = Func(c, k), Func(c1, k)
-        res = 0
-        for s in samples(vel):
-            res += self.tfreq[f1, f, s] / self.cfreq[f, s]
-            # TODO encapsulate, perhaps create numeric class and override operators, also including normalization and quotients
-        return res # TODO normalize over f1
+        return sum(self.tfreq[f1, f, s] / self.cfreq[f, s] for s in samples(vel)) # TODO normalize over f1
     
     def vprob(self, n1, n, c1, c, k, v, vel):
         f, f1 = Func(c, k), Func(c1, k)
         t, t1 = Tone(n, f), Tone(n1, f1)
-        res = 0
-        for s in samples(vel):
-            res += self.vfreq[t1, t, f1, f, v, s] * self.cfreq[f, s] / (self.nfreq[t, f, v, s] * self.tfreq[f1, f, s])
-        return res
+        return sum(self.vfreq[t1, t, f1, f, v, s] * self.cfreq[f, s] / (self.nfreq[t, f, v, s] * self.tfreq[f1, f, s]) 
+                   for s in samples(vel))
     
     def samples(self, vel):
         pass

@@ -4,9 +4,9 @@ from collections import defaultdict
 
 table = freqs.Env()
 
-def inferchords(notes, key = None, voice = None, vel = None): # TODO generalize as kwargs
+def harmonize(notes, key = None, voice = None, vel = None): # TODO generalize as kwargs
     '''
-    inferchords(notes, key = None, voice = None, vel = None)
+    harmonize(notes, key = None, voice = None, vel = None)
     Returns the most probable sequence of chords for the given sequence of notes, with optional information
     given for the key, voice, signature and harmonic rhythm.
     The key is inferred if not provided; the other variables are averaged or not considered.
