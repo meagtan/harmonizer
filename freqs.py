@@ -9,13 +9,12 @@ class Freq:
     
     def __getitem__(self, item, norm = True): 
         if item is None:
-            return self.table[item] # TODO normalize
+            return self.table[None]
         if not isinstance(item, tuple):
             return self.table[item][None]
         if item[0] is not None:
             return self.table[item[0]].__getitem__(item[1:], False) # TODO normalize if norm and return 0 if not member
-        # normalize over topmost trait (how would this behave if item = ((),)?)
-        return self.table[item[0]] # TODO normalize
+        return self.table[None] # TODO normalize
     
     def __setitem__(self, item, value):
         self.cnt += value - self.__getitem__[item]
