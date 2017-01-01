@@ -13,7 +13,7 @@ def inferchords(notes, key = None, voice = None, vel = None): # TODO generalize 
     '''
     
     # Viterbi algorithm
-    probs  = defaultdict(int)
+    probs  = defaultdict(Prob)
     preds  = {}
     length = len(notes)
     
@@ -21,7 +21,7 @@ def inferchords(notes, key = None, voice = None, vel = None): # TODO generalize 
         probs[c, k, 0] = p # cprob(c, k) * nprob(notes[0], c, k, voice) # perhaps move cprob to chords
     
     for i in xrange(1, length):
-        bestprob = 0
+        bestprob = Prob()
         best = None
         for c, k, _ in chords(notes[i], key, voice):
             # find max and arg max of transition

@@ -1,28 +1,47 @@
 import music21
 from fractions import Fraction
 
-class Norm(Fraction):
+class Prob(Fraction):
     '''
-    Integral type with extra normalization factor.
+    Integral type with extra normalization factor, to represent probabilities accurately.
     '''
     def __new__(cls, val = 0, norm = None):
-        self = Fraction.__new__(cls, Fraction(val, norm) if norm else 0)
+        self = Fraction.__new__(cls, val if norm is None else Fraction(val, norm) if norm else 0)
         return self
+    
+    def __repr__(self):
+        return self.__str__()
+    
+    # cast arithmetic operators
+    def __add__(self, other):
+        return Prob(Fraction.__add__(self, other))
+    def __radd__(self, other):
+        return Prob(Fraction.__radd__(self, other))
+    def __sub__(self, other):
+        return Prob(Fraction.__sub__(self, other))
+    def __rsub__(self, other):
+        return Prob(Fraction.__rsub__(self, other))
+    def __mul__(self, other):
+        return Prob(Fraction.__mul__(self, other))
+    def __rmul__(self, other):
+        return Prob(Fraction.__rmul__(self, other))
+    
+    # modify division for 0
     def __div__(self, other):
         return Fraction.__div__(self, other) if other != 0 else 0
     def __rdiv__(self, other):
-        return Norm(other) / self
+        return Prob(other) / self
 
 class Freq:
     '''
     Multiple dimensional frequency table.
     '''
     def __init__(self):
-        self.table = {None : Norm(0)}
+        self.table = {None : Prob(0)}
     
     def __getitem__(self, item, norm = True): 
         if norm:
-            return Norm(self.__getitem__(item, False), self.table[None])
+            return Prob(self.__getitem__(item, False), self.table[None])
         try:
             if not item:
                 return self.table[None]
