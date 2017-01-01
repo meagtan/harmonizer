@@ -1,14 +1,18 @@
 import music21
 
 class Freq:
-    'Frequency tables'
+    'Multiple dimensional frequency table.'
     def __init__(self):
         self.table = {}
-        self.cnt = 0
+        self.cnt = 0 # for normalization over all traits
+        self.sum = 0 # for normalization over topmost trait
     def __getitem__(self, item): 
-        # TODO include separate samples and sum over None elements of item, including in Func and Tone
-        #  In order to do that, perhaps have a nested table forming a tree, where each branch corresponds to a characteristic
-        return self.table[item] / self.cnt if self.cnt and item in self.table else 0
+        if not item or not isinstance(item, tuple):
+            return self.__getitem__((item,))
+        if item[0]:
+            return self.table[item[0]][item[1:]] # TODO normalize and return 0 if not member
+        # normalize over topmost trait (how would this behave if item = ((),)?)
+        return self.sum # TODO normalize
     def __setitem__(self, item, value): # TODO include separate samples
         self.cnt += value - self.table[item]
         self.table[item] = value
