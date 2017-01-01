@@ -25,13 +25,13 @@ class Env:
     
     def process(self, sample):
         'Update probabilities based on sample sequence of chords.'
-        cs = funcs(sample)
+        cs = sample.funcs()
         for curr, prev in zip(cs, cs[1:]):
             self.cfreq[curr] += 1       
             self.tfreq[curr, prev] += 1 
             for voice in voices(curr):
-                self.nfreq[note(curr, voice), curr] += 1
-                self.vfreq[note(curr, voice), note(pred, voice), curr, pred] += 1
+                self.nfreq[note(curr, voice), curr, voice] += 1 # TODO also add sample
+                self.vfreq[note(curr, voice), note(pred, voice), curr, pred, voice] += 1
         # TODO this should not count across all samples, but calculate probabilities
         #  based on sums across all samples
     
@@ -42,7 +42,7 @@ class Env:
     
     def nprob(self, n, c, k, v = None):
         f = Func(c, k)
-        return self.nfreq[Tone(n, c, v), f] / self.cprob(c, k) if self.cprob(c, k) else 0
+        return self.nfreq[Tone(n, c), f, v] / self.cprob(c, k) if self.cprob(c, k) else 0
     
     def tprob(self, c1, c, k, vel):
         f, f1 = Func(c, k), Func(c1, k)
@@ -54,17 +54,23 @@ class Env:
     
     def vprob(self, n1, n, c1, c, k, v, vel):
         f, f1 = Func(c, k), Func(c1, k)
-        t, t1 = Tone(f, v), Tone(f1, v)
+        t, t1 = Tone(n, f), Tone(n1, f1)
         res = 0
         for s in samples(vel):
-            res += self.vfreq[t1, t, f1, f, s] * self.cfreq[f, s] / (self.nfreq[t, f, s] * self.tfreq[f1, f, s])
+            res += self.vfreq[t1, t, f1, f, v, s] * self.cfreq[f, s] / (self.nfreq[t, f, v, s] * self.tfreq[f1, f, s])
         return res
     
     def samples(self, vel):
         pass
 
 class Func:
-    pass
+    def __init__(self, chord, key):
+        self.val = (chord.root().diatonicNoteNum - key.tonic.diatonicNoteNum) % 7 + 1
+        self.mod = chord.quality, key.mode
 
 class Tone:
+    def __init__(self, note, func):
+        self.val = (note.diatonicNoteNum - chord.root().diatonicNoteNum) % 7 + 1
+
+class Sample:
     pass
