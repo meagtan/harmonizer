@@ -78,14 +78,14 @@ class Env:
     def samples(self, vel):
         pass
 
-class Func:
+class Func(int):
     def __init__(self, chord, key):
-        self.val = (chord.root().diatonicNoteNum - key.tonic.diatonicNoteNum) % 7 + 1
+        int.__init__(self, (chord.root().diatonicNoteNum - key.tonic.diatonicNoteNum) % 7 + 1)
         self.mod = chord.quality, key.mode
 
-class Tone:
+class Tone(int):
     def __init__(self, note, func):
-        self.val = (note.diatonicNoteNum - chord.root().diatonicNoteNum) % 7 + 1
+        int.__init__(self, (note.diatonicNoteNum - chord.root().diatonicNoteNum) % 7 + 1)
 
 class Sample:
     pass
