@@ -1,5 +1,6 @@
 import music21
-from fractions import Fraction
+from fractions   import Fraction
+from collections import defaultdict
 
 class Prob(Fraction):
     '''
@@ -51,16 +52,16 @@ class Freq:
                 return self.table[item[0]].__getitem__(item[1:], False)
             return sum(self.table[i].__getitem__(item[1:], False) for i in self.table if i)
         except KeyError:
-            return 0
+            return 0 # or perhaps return sum (expected value?), to estimate unknown qualities using average [change to None for that]
     
     def __setitem__(self, item, value):
         self.table[None] += value - self.__getitem__(item, False) # should behave as assignment if item is None
-        if item:
+        if item: # is not None:
             if not isinstance(item, tuple):
                 if item not in self.table:
                     self.table[item] = Freq()
                 self.table[item][None] = value
-            elif item[0]:
+            elif item[0]: # is not None:
                 if item[0] not in self.table:
                     self.table[item[0]] = Freq()
                 self.table[item[0]][item[1:]] = value
@@ -72,26 +73,36 @@ class Freq:
     
 class Env:
     '''
-    Program environment containing probabilities for each chord, note and transition, acquired from sample chorales.
+    Program environment containing probabilities for each chord, note and transition, acquired from sample chord sequences.
     '''
     def __init__(self):
-        # Frequency tables
-        self.cfreq = Freq() # freqs of each chord function
-        self.tfreq = Freq() # freqs of each chord transition
-        self.nfreq = Freq() # freqs of each note function in each chord function
-        self.vfreq = Freq() # freqs of each note transition
-        # TODO process every sample, or write a method for it
+        # Frequency tables    Properties tabulated                  Argument types (current always precedes previous)
+        self.cfreq = Freq() # chord function                        Func, Sample
+        self.tfreq = Freq() # chord transition                      Func, Func, Sample
+        self.nfreq = Freq() # note function in each chord function  Tone, Func, Voice, Sample
+        self.vfreq = Freq() # note transition                       Tone, Tone, Func, Func, Voice, Sample
+        self.samples = defaultdict(set)
     
     def process(self, sample):
-        'Update probabilities based on sample sequence of chords.'
-        cs = sample.funcs()
+        'Update probabilities based on a sample sequence of chords.'
+        vel = sample.vel
+        key = sample.key
+        cs  = sample.chords()
+        
+        # add sample to samples
+        self.samples[None].add(sample)
+        if vel:
+            self.samples[vel].add(sample)
+        
         for curr, prev in zip(cs, [None] + cs[1:]):
-            self.cfreq[curr, sample] += 1       
-            self.tfreq[curr, prev, sample] += 1 
-            for voice in voices(curr):
+            f, f1 = Func(curr, key), Func(prev, key)
+            self.cfreq[f, sample] += 1       
+            self.tfreq[f, f1, sample] += 1 
+            for voice in voices(curr): # TODO voices(chord) generates each voice of chord
+                n, n1 = note(curr, voice), note(prev, voice)
                 # TODO note(chord, voice) returns note of chord in voice
-                self.nfreq[note(curr, voice), curr, voice, sample] += 1
-                self.vfreq[note(curr, voice), note(pred, voice), curr, pred, voice, sample] += 1
+                self.nfreq[n, f, voice, sample] += 1
+                self.vfreq[n, n1, f, f1, voice, sample] += 1
     
     # TODO memoize the following
     
@@ -106,7 +117,7 @@ class Env:
     def tprob(self, c1, c, k, vel = None):
         'tprob(c1, c, k[, vel]) -> Return probability of chord c changing to chord c1 in key k under harmonic velocity vel.'
         f, f1 = Func(c, k), Func(c1, k)
-        return sum(self.tfreq[f1, f, s] / self.cfreq[f, s] for s in samples(vel)) # TODO normalize over f1
+        return sum(self.tfreq[f1, f, s] / self.cfreq[f, s] for s in self.samples[vel])
     
     def vprob(self, n1, n, c1, c, k, v = None, vel = None):
         '''vprob(n1, n, c1, c, k[, v, vel]) -> 
@@ -115,19 +126,17 @@ class Env:
         f, f1 = Func(c, k), Func(c1, k)
         t, t1 = Tone(n, f), Tone(n1, f1)
         return sum(self.vfreq[t1, t, f1, f, v, s] * self.cfreq[f, s] / (self.nfreq[t, f, v, s] * self.tfreq[f1, f, s]) 
-                   for s in samples(vel))
+                   for s in self.samples[vel])
     
-    def samples(self, vel = None):
-        pass
+## Auxiliary classes, perhaps move to another file
 
-class Func(int):
+class Func(tuple):
     '''
     Stores the diatonic function of a chord in a key, e.g. Func(A7, Dm) represents dominant major in a minor key.
     '''
     def __new__(cls, chord, key):
-        self = int.__new__(cls, (chord.root().diatonicNoteNum - key.tonic.diatonicNoteNum) % 7 + 1)
-        self.mod = chord.quality, key.mode
-        return self
+        return tuple.__new__(cls, ((chord.root().diatonicNoteNum - key.tonic.diatonicNoteNum) % 7 + 1,
+                                   chord.quality, key.mode))
     pass
 
 class Tone(int):
@@ -135,15 +144,14 @@ class Tone(int):
     Stores the tone of a note in a chord, e.g. Tone(C, DM) returns 7.
     '''
     def __new__(cls, note, func):
-        self = int.__new__(cls, (note.diatonicNoteNum - chord.root().diatonicNoteNum) % 7 + 1)
-        return self
+        return int.__new__(cls, (note.diatonicNoteNum - chord.root().diatonicNoteNum) % 7 + 1)
     pass
 
 class Sample:
     '''
     A processed sample chorale containing a list of chords, with optionally specified harmonic velocity.
     '''
-    def funcs(self):
-        'Return list of chord functions in sample.'
+    def chords(self):
+        'Return list of chords in sample.'
         pass
     pass
