@@ -5,10 +5,13 @@ class Norm(Fraction):
     '''
     Integral type with extra normalization factor.
     '''
-    def __new__(cls, val, norm = None):
-        self = int.__new__(cls, Fraction(val, norm) if norm else 0)
+    def __new__(cls, val = 0, norm = None):
+        self = Fraction.__new__(cls, Fraction(val, norm) if norm else 0)
+        return self
     def __div__(self, other):
-        return int.__div__(self, other) if other != 0 else 0
+        return Fraction.__div__(self, other) if other != 0 else 0
+    def __rdiv__(self, other):
+        return Norm(other) / self
 
 class Freq:
     '''
@@ -102,10 +105,12 @@ class Func(int):
     def __new__(cls, chord, key):
         self = int.__new__(cls, (chord.root().diatonicNoteNum - key.tonic.diatonicNoteNum) % 7 + 1)
         self.mod = chord.quality, key.mode
+        return self
 
 class Tone(int):
     def __new__(cls, note, func):
         self = int.__new__(cls, (note.diatonicNoteNum - chord.root().diatonicNoteNum) % 7 + 1)
+        return self
 
 class Sample:
     pass
