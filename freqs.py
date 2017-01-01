@@ -4,10 +4,11 @@ class Freq:
     'Multiple dimensional frequency table.'
     def __init__(self):
         self.table = {} # should have a None entry keeping count, and other entries frequency tables
-        self.cnt = 0 # for normalization over all traits
         self.table[None] = 0 # perhaps subclass int for this
     
     def __getitem__(self, item, norm = True): 
+        if norm:
+            return self.table[None] and self.__getitem__(item, False) / self.table[None]
         try:
             if not item:
                 return self.table[None]
@@ -20,7 +21,6 @@ class Freq:
             return 0
     
     def __setitem__(self, item, value):
-        self.cnt += value - self.__getitem__(item)
         self.table[None] += value - self.__getitem__(item) # should behave as assignment if item is None
         if item:
             if not isinstance(item, tuple):
