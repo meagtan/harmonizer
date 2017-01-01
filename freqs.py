@@ -5,24 +5,29 @@ class Freq:
     def __init__(self):
         self.table = {} # should have a None entry keeping count, and other entries frequency tables
         self.cnt = 0 # for normalization over all traits
-        self.table[None] = 0
+        self.table[None] = 0 # perhaps subclass int for this
     
     def __getitem__(self, item, norm = True): 
-        if item is None:
-            return self.table[None]
-        if not isinstance(item, tuple):
-            return self.table[item][None]
-        if item[0] is not None:
-            return self.table[item[0]].__getitem__(item[1:], False) # TODO normalize if norm and return 0 if not member
-        return self.table[None] # TODO normalize
+        try:
+            if not item:
+                return self.table[None]
+            if not isinstance(item, tuple):
+                return self.table[item][None]
+            if item[0]:
+                return self.table[item[0]].__getitem__(item[1:], False) # TODO normalize if norm and return 0 if not member
+            return sum(self.table[i].__getitem__(item[1:], False) for i in self.table if i) # TODO normalize
+        except KeyError:
+            return 0
     
     def __setitem__(self, item, value):
-        self.cnt += value - self.__getitem__[item]
-        self.table[None] += value - self.__getitem__[item] # should behave as assignment if item is None
-        if item is not None:
+        self.cnt += value - self.__getitem__(item)
+        self.table[None] += value - self.__getitem__(item) # should behave as assignment if item is None
+        if item:
             if not isinstance(item, tuple):
-                self.__setitem__((item,), value)
-            else if item[0] is not None:
+                if item not in self.table:
+                    self.table[item] = Freq()
+                self.table[item][None] = value
+            elif item[0]:
                 if item[0] not in self.table:
                     self.table[item[0]] = Freq()
                 self.table[item[0]][item[1:]] = value
