@@ -38,17 +38,17 @@ class Freq:
     Multiple dimensional frequency table.
     '''
     def __init__(self):
-        self.table = {None : Prob(0)}
+        self.table = {None : 0}
     
     def __getitem__(self, item, norm = True): 
         if norm:
             return Prob(self.__getitem__(item, False), self.table[None])
         try:
-            if not item:
+            if item is None or item is (): # not item:
                 return self.table[None]
             if not isinstance(item, tuple):
                 return self.table[item][None]
-            if item[0]:
+            if item[0] is not None:
                 return self.table[item[0]].__getitem__(item[1:], False)
             return sum(self.table[i].__getitem__(item[1:], False) for i in self.table if i)
         except KeyError:
@@ -56,12 +56,12 @@ class Freq:
     
     def __setitem__(self, item, value):
         self.table[None] += value - self.__getitem__(item, False) # should behave as assignment if item is None
-        if item: # is not None:
+        if item is not None and item is not (): # item:
             if not isinstance(item, tuple):
                 if item not in self.table:
                     self.table[item] = Freq()
                 self.table[item][None] = value
-            elif item[0]: # is not None:
+            elif item[0] is not None:
                 if item[0] not in self.table:
                     self.table[item[0]] = Freq()
                 self.table[item[0]][item[1:]] = value
