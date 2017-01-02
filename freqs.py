@@ -11,7 +11,7 @@ class Prob(Fraction):
         return self
     
     def __repr__(self):
-        return self.__str__()
+        return str(self)
     
     # cast arithmetic operators
     def __add__(self, other):
@@ -95,7 +95,7 @@ class Env:
         
         vel = sample.vel
         key = sample.key
-        cs  = sample.chords()
+        cs  = sample.chords
         
         # add sample to samples
         self.samples[None].add(sample)
@@ -124,6 +124,8 @@ class Env:
     
     def tprob(self, c1, c, k, vel = None):
         'tprob(c1, c, k[, vel]) -> Return probability of chord c changing to chord c1 in key k under harmonic velocity vel.'
+        if c == c1:
+            return self.cprob(c, k) # perhaps dependent on vel
         f, f1 = Func(c, k), Func(c1, k)
         return sum(self.tfreq[f1, f, s] / self.cfreq[f, s] for s in self.samples[vel])
     
@@ -131,6 +133,8 @@ class Env:
         '''vprob(n1, n, c1, c, k[, v, vel]) -> 
         Return probability of note n in chord c changing to note n1 in chord c1 
         in key k and voice v under harmonic velocity vel.'''
+        if n == n1 and c == c1:
+            return self.nprob(n, c, k, v) # perhaps dependent on vel
         f, f1 = Func(c, k), Func(c1, k)
         t, t1 = Tone(n, f), Tone(n1, f1)
         return sum(self.vfreq[t1, t, f1, f, v, s] * self.cfreq[f, s] / (self.nfreq[t, f, v, s] * self.tfreq[f1, f, s]) 
@@ -161,12 +165,15 @@ class Sample:
     '''
     def __init__(self, filename):
         cs = corpus.parse(filename).chordify()
-        # TODO set key, vel
-        for c in cs:
+        ks = cs.getKeySignatures()[0]
+        
+        self.key = key.Key(ks.getScale().tonic, ks.mode)
+        self.vel = None # TODO change this, perhaps use qualities other than vel, such as measure ends
+        self.chords = [] 
+        for m in cs:
             # parse each chord as a list of notes, keeping ties in mind
-            pass
+            if isinstance(m, stream.Measure):
+                for c in m.notes(): # cannot call notes directly apparently
+                    self.chords.append(c)
     
-    def chords(self):
-        'Return list of chords in sample.'
-        pass
     pass
