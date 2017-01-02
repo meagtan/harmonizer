@@ -95,15 +95,15 @@ class Env:
         
         vel = sample.vel
         key = sample.key
-        cs  = sample.chords
         
         # add sample to samples
         self.samples[None].add(sample)
         if vel:
             self.samples[vel].add(sample)
         
-        for curr, prev in zip(cs, [None] + cs[1:]):
-            f, f1 = Func(curr, key), Func(prev, key)
+        prev = None
+        for curr in sample.chords():
+            f, f1 = Func(curr, key), Func(prev, key) # TODO prev is initially None
             self.cfreq[f, sample] += 1       
             self.tfreq[f, f1, sample] += 1 
             for voice in voices(curr): # TODO voices(chord) generates each voice of chord
@@ -111,6 +111,7 @@ class Env:
                 # TODO note(chord, voice) returns note of chord in voice
                 self.nfreq[n, f, voice, sample] += 1
                 self.vfreq[n, n1, f, f1, voice, sample] += 1
+            prev = curr
     
     # TODO memoize the following
     
@@ -164,16 +165,16 @@ class Sample:
     A processed sample chorale containing a list of chords, with optionally specified harmonic velocity.
     '''
     def __init__(self, filename):
-        cs = corpus.parse(filename).chordify()
+        self.cs = corpus.parse(filename).chordify()
         ks = cs.getKeySignatures()[0]
         
         self.key = key.Key(ks.getScale().tonic, ks.mode)
         self.vel = None # TODO change this, perhaps use qualities other than vel, such as measure ends
-        self.chords = [] 
-        for m in cs:
+    
+    def chords(self):
+        'Iterates through each chord of sample.'
+        for m in self.cs:
             # parse each chord as a list of notes, keeping ties in mind
             if isinstance(m, stream.Measure):
                 for c in m.notes(): # cannot call notes directly apparently
-                    self.chords.append(c)
-    
-    pass
+                    yield c
