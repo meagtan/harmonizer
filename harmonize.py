@@ -1,8 +1,11 @@
 import freqs
 import heapq as hp
 from collections import defaultdict
+from music21 import corpus
+from frequtils import *
 
 table = freqs.Env()
+table.train(corpus.getBachChorales())
 
 def harmonize(notes, key = None, voice = None, vel = None): # TODO generalize as kwargs
     '''
@@ -36,6 +39,7 @@ def harmonize(notes, key = None, voice = None, vel = None): # TODO generalize as
                 best = c, k
     
     # construct chords
+    # perhaps construct likeliest four-part voice leading from these later
     c, k = best
     chors = [c]
     for i in xrange(length - 1, 0, -1):
