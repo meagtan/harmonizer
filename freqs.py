@@ -106,9 +106,8 @@ class Env:
             f, f1 = Func(curr, key), Func(prev, key) # TODO prev is initially None
             self.cfreq[f, sample] += 1       
             self.tfreq[f, f1, sample] += 1 
-            for voice in voices(curr): # TODO voices(chord) generates each voice of chord
-                n, n1 = note(curr, voice), note(prev, voice) # what if multiple notes are played on the same chord? consider ties
-                # TODO note(chord, voice) returns note of chord in voice
+            for voice, n in enumerate(chord, pitches):
+                n1 = prev.pitches[voice] # what if multiple notes are played on the same chord? consider ties
                 self.nfreq[n, f, voice, sample] += 1
                 self.vfreq[n, n1, f, f1, voice, sample] += 1
             prev = curr
@@ -165,6 +164,7 @@ class Sample:
     A processed sample chorale containing a list of chords, with optionally specified harmonic velocity.
     '''
     def __init__(self, filename):
+        self.filename = filename
         self.cs = corpus.parse(filename).chordify()
         ks = cs.getKeySignatures()[0]
         
@@ -178,3 +178,8 @@ class Sample:
             if isinstance(m, stream.Measure):
                 for c in m.notes(): # cannot call notes directly apparently
                     yield c
+    
+    def __hash__(self):
+        return hash(self.filename)
+    def __eq__(self, other):
+        return isinstance(other, Sample) and self.filename == other.filename
