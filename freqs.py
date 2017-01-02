@@ -29,7 +29,7 @@ class Prob(Fraction):
     
     # modify division for 0
     def __div__(self, other):
-        return Fraction.__div__(self, other) if other != 0 else 0
+        return Prob(Fraction.__div__(self, other) if other != 0 else 0)
     def __rdiv__(self, other):
         return Prob(other) / self
 
