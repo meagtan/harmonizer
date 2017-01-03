@@ -80,8 +80,8 @@ def chords(note, key = None, voice = None):
     def prob(c, n, k, v):
         return cprob(c, k) * nprob(n, c, k, v)
     
-    for k in ([key] if key else keys): # TODO keys list
-        for c in chords: # TODO chords list
+    for k in ([key] if key else keys):
+        for c in chords:
             p = prob(c, note, key, voice)
             if p > threshold: # TODO constant threshold
                 yield c, k, p
