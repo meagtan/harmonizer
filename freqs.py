@@ -72,11 +72,11 @@ class Env:
         
         prev = None
         for curr in sample.chords():
-            f, f1 = Func(curr, key), Func(prev, key) # TODO prev is initially None
+            f, f1 = Func(curr, key), Func(prev, key)
             self.cfreq[f, sample] += 1       
             self.tfreq[f, f1, sample] += 1 
             for voice, n in enumerate(chord, pitches):
-                n1 = prev.pitches[voice] # what if multiple notes are played on the same chord? consider ties
+                n1 = prev and prev.pitches[voice] # what if multiple notes are played on the same chord? consider ties
                 self.nfreq[n, f, voice, sample] += 1
                 self.vfreq[n, n1, f, f1, voice, sample] += 1
             prev = curr
