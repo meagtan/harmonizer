@@ -10,16 +10,22 @@ class Func(tuple):
     Stores the diatonic function of a chord in a key, e.g. Func(A7, Dm) represents dominant major in a minor key.
     '''
     def __new__(cls, chord, key):
-        return tuple.__new__(cls, ((chord.root().diatonicNoteNum - key.tonic.diatonicNoteNum) % 7 + 1,
-                                   chord.quality, key.mode))
+        try:
+            return tuple.__new__(cls, ((chord.root().diatonicNoteNum - key.tonic.diatonicNoteNum) % 7 + 1,
+                                       chord.quality, key.mode))
+        except AttributeError:
+            return ()
     pass
 
 class Tone(int):
     '''
     Stores the tone of a note in a chord, e.g. Tone(C, DM) returns 7.
     '''
-    def __new__(cls, note, func):
-        return int.__new__(cls, (note.diatonicNoteNum - chord.root().diatonicNoteNum) % 7 + 1)
+    def __new__(cls, note, chord):
+        try:
+            return int.__new__(cls, (note.diatonicNoteNum - chord.root().diatonicNoteNum) % 7 + 1)
+        except AttributeError:
+            return 0
     pass
 
 class Sample:
