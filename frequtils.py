@@ -1,4 +1,9 @@
+from music21 import *
 from fractions import Fraction
+
+tones = [n + a for n in 'CDEFGABcdefgab' for a in ['-', '#', '']]
+keys = map(key.Key, tones)
+chords = [chord.Chord(map(k.pitches.__getitem__, [0, 2, 4])) for k in keys]
 
 class Func(tuple):
     '''
