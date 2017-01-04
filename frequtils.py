@@ -35,7 +35,7 @@ class Sample:
     def __init__(self, filename):
         self.filename = filename
         self.cs = corpus.parse(filename).chordify()
-        ks = cs.getKeySignatures()[0]
+        ks = self.cs.getKeySignatures()[0]
         
         self.key = key.Key(ks.getScale().tonic, ks.mode)
         self.vel = None # TODO change this, perhaps use qualities other than vel, such as measure ends
@@ -45,7 +45,7 @@ class Sample:
         for m in self.cs:
             # parse each chord as a list of notes, keeping ties in mind
             if isinstance(m, stream.Measure):
-                for c in m.notes(): # cannot call notes directly apparently
+                for c in m.notes: # cannot call notes directly apparently
                     yield c
     
     def __hash__(self):
