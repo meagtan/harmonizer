@@ -1,8 +1,10 @@
 from music21 import *
 from fractions import Fraction
 
-tones = [n + a for n in 'CDEFGABcdefgab' for a in ['-', '#', '']]
-keys = map(key.Key, tones)
+fifths = scale.intervalNetwork.BoundIntervalNetwork(['P5'] * 12)
+tones = [str(p)[:-1] for p in fifths.realizePitch(pitch.Pitch('G-0'))]
+keys = [k for maj in map(key.Key, tones) for k in [maj, key.Key(maj.getRelativeMinor().tonic, 'minor')]]
+# keys = [k for maj in map(key.Key, tones) for k in [maj, maj.relative]]
 chords = [chord.Chord(map(k.pitches.__getitem__, [0, 2, 4])) for k in keys]
 
 class Func(tuple):
@@ -37,7 +39,7 @@ class Sample:
         self.cs = corpus.parse(filename).chordify()
         ks = self.cs.getKeySignatures()[0]
         
-        self.key = key.Key(ks.getScale().tonic, ks.mode)
+        self.key = key.Key(ks.getScale().tonic, ks.mode) # ks.asKey(ks.mode)
         self.vel = None # TODO change this, perhaps use qualities other than vel, such as measure ends
     
     def chords(self):
