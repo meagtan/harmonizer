@@ -3,34 +3,34 @@ from collections import defaultdict
 from frequtils   import *
 
 class Freq:
-    '''
-    Multiple dimensional frequency table.
-    '''
+    'Multiple dimensional frequency table.'
     def __init__(self):
-        self.table = {None : 0}
+        self.table = {} # should have a None entry keeping count, and other entries frequency tables
+        self.table[None] = 0 # perhaps subclass int for this
     
-    def __getitem__(self, item, norm = True): 
-        if norm:
-            return Prob(self.__getitem__(item, False), self.table[None])
+    # if first element of item is True, normalizes rest over all elements
+    def __getitem__(self, item): 
         try:
-            if item is None or item is (): # not item:
+            if not item:
                 return self.table[None]
             if not isinstance(item, tuple):
-                return self.table[item][None]
-            if item[0] is not None:
-                return self.table[item[0]].__getitem__(item[1:], False)
-            return sum(self.table[i].__getitem__(item[1:], False) for i in self.table if i)
+                return self.table[item].table[None]
+            if item[0] is True: # normalization
+                return Prob(self.__getitem__(item[1:]), self.table[None])
+            if item[0]:
+                return self.table[item[0]][item[1:]] # TODO normalize if norm and return 0 if not member
+            return self.table[None] # TODO normalize
         except KeyError:
-            return 0 # or perhaps return sum (expected value?), to estimate unknown qualities using average [change to None for that]
+            return 0
     
     def __setitem__(self, item, value):
-        self.table[None] += value - self.__getitem__(item, False) # should behave as assignment if item is None
-        if item is not None and item is not (): # item:
+        self.table[None] += value - self.__getitem__(item) # should behave as assignment if item is None
+        if item:
             if not isinstance(item, tuple):
                 if item not in self.table:
                     self.table[item] = Freq()
                 self.table[item][None] = value
-            elif item[0] is not None:
+            elif item[0]:
                 if item[0] not in self.table:
                     self.table[item[0]] = Freq()
                 self.table[item[0]][item[1:]] = value
@@ -73,10 +73,10 @@ class Env:
         prev = None
         for curr in sample.chords():
             f, f1 = Func(curr, key), Func(prev, key)
-            self.cfreq[f, sample] += 1       
+            self.cfreq[f, sample] += 1     
             self.tfreq[f, f1, sample] += 1 
-            for voice, n in enumerate(chord, pitches):
-                n1 = prev and prev.pitches[voice] # what if multiple notes are played on the same chord? consider ties
+            for voice, n in enumerate(curr.pitches):
+                n1 = prev and voice in prev.pitches and prev.pitches[voice] # what if multiple notes are played on the same chord? consider ties
                 self.nfreq[n, f, voice, sample] += 1
                 self.vfreq[n, n1, f, f1, voice, sample] += 1
             prev = curr
@@ -85,18 +85,18 @@ class Env:
     
     def cprob(self, c, k):
         'cprob(c, k) -> Return probability of chord c occurring in key k.'
-        return self.cfreq[Func(c, k)]
+        return self.cfreq[True, Func(c, k)]
     
     def nprob(self, n, c, k, v = None):
         'nprob(n, c, k[, v]) -> Return probability of note n occurring in voice v of chord c in key k.'
-        return self.nfreq[Tone(n, c), Func(c, k), v] / self.cprob(c, k)
+        return self.nfreq[True, Tone(n, c), Func(c, k), v] / self.cprob(c, k)
     
     def tprob(self, c1, c, k, vel = None):
         'tprob(c1, c, k[, vel]) -> Return probability of chord c changing to chord c1 in key k under harmonic velocity vel.'
         if c == c1:
             return self.cprob(c, k) # perhaps dependent on vel
         f, f1 = Func(c, k), Func(c1, k)
-        return sum(self.tfreq[f1, f, s] / self.cfreq[f, s] for s in self.samples[vel])
+        return sum(self.tfreq[True, f1, f, s] / self.cfreq[True, f, s] for s in self.samples[vel])
     
     def vprob(self, n1, n, c1, c, k, v = None, vel = None):
         '''vprob(n1, n, c1, c, k[, v, vel]) -> 
@@ -106,5 +106,5 @@ class Env:
             return self.nprob(n, c, k, v) # perhaps dependent on vel
         f, f1 = Func(c, k), Func(c1, k)
         t, t1 = Tone(n, f), Tone(n1, f1)
-        return sum(self.vfreq[t1, t, f1, f, v, s] * self.cfreq[f, s] / (self.nfreq[t, f, v, s] * self.tfreq[f1, f, s]) 
+        return sum(self.vfreq[True, t1, t, f1, f, v, s] * self.cfreq[True, f, s] / (self.nfreq[True, t, f, v, s] * self.tfreq[True, f1, f, s]) 
                    for s in self.samples[vel])
