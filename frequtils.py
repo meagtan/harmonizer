@@ -50,6 +50,11 @@ class Sample:
                 for c in m.notes: # cannot call notes directly apparently
                     yield c
     
+    def notes(self, voice):
+        'Iterates through each note in sample at a given voice.'
+        for c in self.chords():
+            yield c.pitches[voice]
+    
     def __hash__(self):
         return hash(self.filename)
     def __eq__(self, other):
