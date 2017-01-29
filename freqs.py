@@ -10,7 +10,7 @@ class Freq:
     
     def __getitem__(self, item): 
         try:
-            if not item: # might also store 0
+            if item in [None, ()]:
                 return self.table[None]
             if not isinstance(item, tuple):
                 return self.table[item].table[None]
@@ -22,7 +22,7 @@ class Freq:
                     if i is not None:
                         s += self.table[i][item[2:]]
                 return Prob(self.__getitem__(item[1:]), s)
-            if item[0]:
+            if item[0] not in [None, ()]:
                 return self.table[item[0]][item[1:]]
             return self.table[None]
         except KeyError:
@@ -30,12 +30,12 @@ class Freq:
     
     def __setitem__(self, item, value):
         self.table[None] += value - self.__getitem__(item) # should behave as assignment if item is None
-        if item:
+        if item not in [None, ()]:
             if not isinstance(item, tuple):
                 if item not in self.table:
                     self.table[item] = Freq()
                 self.table[item][None] = value
-            elif item[0]:
+            elif item[0] not in [None, ()]:
                 if item[0] not in self.table:
                     self.table[item[0]] = Freq()
                 self.table[item[0]][item[1:]] = value
