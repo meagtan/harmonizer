@@ -14,7 +14,7 @@ def errorrate(sample):
     return p[True, False] # probability of failure
 
 def kfoldcv(samples = None, k = 10):
-    'Run k-fold cross-validation on set of samples, .'
+    'Run k-fold cross-validation on set of samples, returning average generalization error.'
     global table
     t = table # back up original table
     if not samples:
