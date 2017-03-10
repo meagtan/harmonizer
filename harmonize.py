@@ -4,8 +4,7 @@ from collections import defaultdict
 from music21 import corpus
 from frequtils import *
 
-table = freqs.Env()
-table.train(corpus.getBachChorales())
+table = freqs.table
 
 def harmonize(notes, key = None, voice = None, vel = None): # TODO generalize as kwargs
     '''
