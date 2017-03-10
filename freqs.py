@@ -120,3 +120,6 @@ class Env:
         t, t1 = Tone(n, c), Tone(n1, c1)
         return sum(self.vfreq[True, t1, t, f1, f, v, s] * self.cfreq[True, f, s] / (self.nfreq[True, t, f, v, s] * self.tfreq[True, f1, f, s]) 
                    for s in self.samples[vel]) / len(self.samples[vel])
+
+table = Env()
+table.train(corpus.getBachChorales())
