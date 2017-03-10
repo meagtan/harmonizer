@@ -17,7 +17,7 @@ def likeliest_enharm(n, np, nn, c, cp, cn, k):
 	the previous, current and next chords.
 	'''
 	# P(n = e | np, nn, c, cp, cn, k) = Z * P(n = e | np, cp, c, k) * P(nn | n = e, c, cn, k)
-	n1 = enharm_eqv(n)
+	n1 = n.getEnharmonic() # n is a pitch
 	# problem: what if np, nn are also ambiguous? condition across enharmonics, in a function replacing tprob
 	if table.tprob(n1, np, cp, c, k) * table.tprob(nn, n1, c, cn, k) >
 	   table.tprob( n, np, cp, c, k) * table.tprob(nn,  n, c, cn, k):
