@@ -55,6 +55,7 @@ class Env:
         self.tfreq = Freq() # chord transition                      Func, Func, Sample
         self.nfreq = Freq() # note function in each chord function  Tone, Func, Voice, Sample
         self.vfreq = Freq() # note transition                       Tone, Tone, Func, Func, Voice, Sample
+        self.kfreq = Freq() # marginal distribution of keys         Key
         self.samples = defaultdict(set)
     
     def train(self, filenames):
@@ -72,6 +73,7 @@ class Env:
         
         vel = sample.vel
         key = sample.key
+        self.kfreq[key] += 1
         
         # add sample to samples
         self.samples[None].add(sample)
