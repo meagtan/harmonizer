@@ -26,18 +26,25 @@ class Freq:
                 return self.table[item[0]][item[1:]]
             return self.table[None]
         except KeyError:
-            return 0
+            return 1 # Laplace smoothing
     
     def __setitem__(self, item, value):
-        self.table[None] += value - self.__getitem__(item) # should behave as assignment if item is None
+        val = self.__getitem__(item)
+        if val == 1: # item not in table
+            self.table[None] += value + 1 # Laplace smoothing
+        else:
+            self.table[None] += value - self.__getitem__(item)
+        
         if item not in [None, ()]:
             if not isinstance(item, tuple):
                 if item not in self.table:
                     self.table[item] = Freq()
+                    self.table[item][None] = 1
                 self.table[item][None] = value
             elif item[0] not in [None, ()]:
                 if item[0] not in self.table:
                     self.table[item[0]] = Freq()
+                    self.table[item[0]][None] = 1
                 self.table[item[0]][item[1:]] = value
     
     def __index__(self):
