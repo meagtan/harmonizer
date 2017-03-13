@@ -69,6 +69,13 @@ def nprob(n, c, k, voice = None, n1 = None, c1 = None, vel = None):
         return table.nprob(n, c, k, voice)
     return table.vprob(n, n1, c, c1, k, voice, vel)
 
+def kprob(k):
+    '''
+    kprob(k)
+    Returns the marginal probability of a key.
+    '''
+    return table.kprob(k)
+
 def chords(note, key = None, voice = None):
     '''
     chords(note[, key, voice])
@@ -77,7 +84,7 @@ def chords(note, key = None, voice = None):
     '''
     # probability = cprob(chord, key) * nprob(note, chord, key, voice)
     def prob(c, n, k, v):
-        return cprob(c, k) * nprob(n, c, k, v)
+        return cprob(c, k) * nprob(n, c, k, v) * kprob(k)
     
     for k in ([key] if key else keys):
         for c in chords:
