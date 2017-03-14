@@ -5,6 +5,7 @@ from music21 import corpus
 from frequtils import *
 
 table = freqs.table
+threshold = Prob(1, 288)
 
 def harmonize(notes, key = None, voice = None, vel = None): # TODO generalize as kwargs
     '''
