@@ -110,14 +110,14 @@ class Env:
     
     def nprob(self, n, c, k, v = None):
         'nprob(n, c, k[, v]) -> Return probability of note n occurring in voice v of chord c in key k.'
-        return self.nfreq[True, Tone(n, c), Func(c, k), v] / self.cprob(c, k) # should normalize over v if not none
+        return self.nfreq[True, Tone(n, c), Func(c, k), v] # should normalize over v if not none
     
     def tprob(self, c1, c, k, vel = None):
         'tprob(c1, c, k[, vel]) -> Return probability of chord c changing to chord c1 in key k under harmonic velocity vel.'
         if c == c1:
             return self.cprob(c, k) # perhaps dependent on vel
         f, f1 = Func(c, k), Func(c1, k)
-        return sum(self.tfreq[True, f1, f, s] / self.cfreq[True, f, s] for s in self.samples[vel]) / len(self.samples[vel])
+        return self.tfreq[True, f1, f, s]
     
     def vprob(self, n1, n, c1, c, k, v = None, vel = None):
         '''vprob(n1, n, c1, c, k[, v, vel]) -> 
@@ -127,8 +127,7 @@ class Env:
             return self.nprob(n, c, k, v) # perhaps dependent on vel
         f, f1 = Func(c, k), Func(c1, k)
         t, t1 = Tone(n, c), Tone(n1, c1)
-        return sum(self.vfreq[True, t1, t, f1, f, v, s] * self.cfreq[True, f, s] / (self.nfreq[True, t, f, v, s] * self.tfreq[True, f1, f, s]) 
-                   for s in self.samples[vel]) / len(self.samples[vel])
+        return self.vfreq[True, t1, t, f1, f, v, s]
 
 # TODO load table from file, if possible
 table = Env()
