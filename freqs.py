@@ -102,6 +102,10 @@ class Env:
     
     # TODO memoize the following
     
+    def kprob(self, k):
+        'kprob(k) -> Return probability of key k.'
+        return self.kfreq[True, k]
+    
     def cprob(self, c, k):
         'cprob(c, k) -> Return probability of chord c occurring in key k.'
         return self.cfreq[True, Func(c, k)]
