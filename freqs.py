@@ -63,19 +63,19 @@ class Env:
         self.nfreq = Freq() # note function in each chord function  Tone, Func, Voice, Sample
         self.vfreq = Freq() # note transition                       Tone, Tone, Func, Func, Voice, Sample
         self.kfreq = Freq() # marginal distribution of keys         Key
-        self.samples = defaultdict(set)
+        self.samples = set()
     
     def train(self, filenames):
         'Train probabilities from given iterator of filenames, for example corpus.getBachChorales().'
         for f in filenames:
             s = Sample(f)
-            if s not in self.samples[None]:
+            if s not in self.samples:
                 print 'Processing %s...' % f
                 self.process(s)
     
     def process(self, sample):
         'Update probabilities based on a sample sequence of chords.'
-        if sample in self.samples[None]:
+        if sample in self.samples:
             return
         
         vel = sample.vel
@@ -83,9 +83,7 @@ class Env:
         self.kfreq[key] += 1
         
         # add sample to samples
-        self.samples[None].add(sample)
-        if vel:
-            self.samples[vel].add(sample)
+        self.samples.add(sample)
         
         prev = None
         for curr in sample.chords():
