@@ -64,3 +64,12 @@ class VelEnv(Env):
             for f in self.tfreq.table:
                 if f is not None:
                     self.tfreq[f, f, s] -= c[s, f]
+    
+    def tprob(self, c1, c, k, vel = None):
+        'tprob(c1, c, k[, vel]) -> Return probability of chord c changing to chord c1 in key k under harmonic velocity vel.'
+        p = Env.tprob(self, c1, c, k)
+        if vel is not None:
+            p *= vel
+            if c1 == c:
+                p += 1 - vel
+        return p
