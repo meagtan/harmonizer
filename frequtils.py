@@ -19,15 +19,16 @@ class Func(tuple):
             return ()
     pass
 
-class Tone(int):
+class Tone(tuple):
     '''
-    Stores the tone of a note in a chord, e.g. Tone(C, DM) returns 7.
+    Stores the tone of a note in a chord, e.g. Tone(C, DM) returns (7, 0).
     '''
     def __new__(cls, note, chord):
         try:
-            return int.__new__(cls, (note.diatonicNoteNum - chord.root().diatonicNoteNum) % 7 + 1)
+            return tuple.__new__(cls, (note.diatonicNoteNum - chord.root().diatonicNoteNum) % 7 + 1,
+                                      int(note.alter - chord.root().alter)) # store accidental
         except AttributeError:
-            return 0
+            return ()
     pass
 
 class Sample:
