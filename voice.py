@@ -48,9 +48,9 @@ class VoiceEnv(Env):
 				t = Tone(n, curr)
 				self.nfreq[t, f, voice, sample] += 1
                 try:
-                    n1 = prev.pitches[voice] # what if multiple notes are played on the same chord? consider ties
-                    t1 = Tone(n1, prev)
-                    self.vfreq[t, t1, f, f1, voice, sample] += 1
+					n1 = prev.pitches[voice] # what if multiple notes are played on the same chord? consider ties
+					t1 = Tone(n1, prev)
+					self.vfreq[t, t1, f, f1, voice, sample] += 1
 					
 					# override: update motion frequencies wrt each lower voice
 					for v1, m in enumerate(curr.pitches[:voice]):
