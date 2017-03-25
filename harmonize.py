@@ -45,6 +45,7 @@ def harmonize(notes, key = None, voice = None, vel = None): # TODO generalize as
     for i in xrange(length - 1, 0, -1):
         c = preds[c, k, i]
         chors.append(c)
+    chors.reverse()
     
     return k, chors, bestprob
 
