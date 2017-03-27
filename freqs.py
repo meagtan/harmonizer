@@ -93,7 +93,7 @@ class Env:
             for voice, n in enumerate(curr.pitches): # TODO sort pitches first
                 try:
                     n1 = prev.pitches[voice] # what if multiple notes are played on the same chord? consider ties
-                    t, t1 = Tone(n, curr), Tone(n1, prev)
+                    t, t1 = Tone(n, key), Tone(n1, key)
                     self.nfreq[t, f, voice, sample] += 1
                     self.vfreq[t, t1, f, f1, voice, sample] += 1
                 except:
