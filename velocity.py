@@ -44,7 +44,7 @@ class VelEnv(Env):
         for s in self.samples:
             for f in self.tfreq.table:
                 if f is not None:
-                    c[s, f] = Prob(self.tfreq[f, f, s], 2)   # 1/2 picked as starting value for all w
+                    self.c[s, f] = Prob(self.tfreq[f, f, s], 2)   # 1/2 picked as starting value for all w
         # loop until convergence
         for _ in xrange(10): # TODO find better loop condition
             # calculate velocity for each sample
@@ -57,13 +57,13 @@ class VelEnv(Env):
                         n1 = sum(c[s1, f] for s1 in self.samples)
                         n2 = self.tfreq[f, f] - n1
                         n1 = self.cfreq[f] - n2
-                        c[s, f] = (1 - s.vel) * n1 / ((1 - s.vel) * n1 + s.vel * n2) * self.tfreq[f, f, s]
+                        self.c[s, f] = (1 - s.vel) * n1 / ((1 - s.vel) * n1 + s.vel * n2) * self.tfreq[f, f, s]
         # subtract c from each probability of f -> f
         # perhaps move this into tprob
         for s in self.samples:
             for f in self.tfreq.table:
                 if f is not None:
-                    self.tfreq[f, f, s] -= c[s, f]
+                    self.tfreq[f, f, s] -= self.c[s, f]
     
     def tprob(self, c1, c, k, vel = None):
         'tprob(c1, c, k[, vel]) -> Return probability of chord c changing to chord c1 in key k under harmonic velocity vel.'
