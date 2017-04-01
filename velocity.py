@@ -49,12 +49,12 @@ class VelEnv(Env):
         for _ in xrange(10): # TODO find better loop condition
             # calculate velocity for each sample
             for s in self.samples:
-                s.vel = 1 - sum(c[s, f] for f in self.tfreq.table if f is not None) / len(s.cs) # TODO find better iterators
+                s.vel = 1 - sum(self.c[s, f] for f in self.tfreq.table if f is not None) / len(s.cs) # TODO find better iterators
             # calculate w and c for each sample and function
             for s in self.samples:
                 for f in self.tfreq.table:
                     if f is not None:
-                        n1 = sum(c[s1, f] for s1 in self.samples)
+                        n1 = sum(self.c[s1, f] for s1 in self.samples)
                         n2 = self.tfreq[f, f] - n1
                         n1 = self.cfreq[f] - n2
                         self.c[s, f] = (1 - s.vel) * n1 / ((1 - s.vel) * n1 + s.vel * n2) * self.tfreq[f, f, s]
