@@ -36,7 +36,7 @@ class keysvm():
             x.append(dict((freqs.tones.index(str(n)), h[n]) for n in h)) # each dimension corresponds to the index of a note
         prob = svm_problem(y, x)
         param = svm_parameter('-t 0 -v 5 -q')
-        self.m = svm_train(prob, param)
+        self.m = libsvm.svm_train(prob, param)
     
     def findkey(self, s):
         'Predict the key of a sample based on the trained SVM classifier.'
