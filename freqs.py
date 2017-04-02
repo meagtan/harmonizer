@@ -46,6 +46,13 @@ class Freq:
                     self.table[item[0]] = Freq()
                     self.table[item[0]][None] = 1
                 self.table[item[0]][item[1:]] = value
+                
+    def __iter__(self):
+        for i in self.table:
+            if i is not None:
+                yield i
+    def __len__(self):
+        return len(self.table) - 1
     
     def __index__(self):
         return self.table[None]
