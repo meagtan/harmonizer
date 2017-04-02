@@ -25,8 +25,8 @@ class Tone(tuple):
     '''
     def __new__(cls, note, key):
         try:
-            return tuple.__new__(cls, (note.diatonicNoteNum - key.tonic.diatonicNoteNum) % 7 + 1,
-                                      int(note.alter - key.tonic.alter)) # store accidental
+            return tuple.__new__(cls, ((note.diatonicNoteNum - key.tonic.diatonicNoteNum) % 7 + 1,
+                                      int(note.alter - key.tonic.alter))) # store accidental
         except AttributeError:
             return ()
     pass
