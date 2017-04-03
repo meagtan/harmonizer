@@ -24,6 +24,7 @@ def findkeyks(s):
     'Return the most likely key of a sample, using the Krumhansl-Schmuckler algorithm.'
     return s.cs.analyze('krumhansl')
 
+# too many classes, may overfit, does not consider permutations of the same vector
 class keysvm():
     'SVM classifier for finding the most likely key of a sample from its histogram.'
     
@@ -33,7 +34,7 @@ class keysvm():
         for s in samples:
             h = histogram(s)
             y.append(freqs.keys.index(s.key)) # labels of multi-class classifier correspond to indices of keys
-            x.append(dict((freqs.tones.index(str(n)), h[n]) for n in h)) # each dimension corresponds to the index of a note
+            x.append(histtodict(h)) # each dimension corresponds to the index of a note
         prob = svm_problem(y, x)
         param = svm_parameter('-t 0 -v 5 -q')
         self.m = libsvm.svm_train(prob, param)
@@ -41,5 +42,33 @@ class keysvm():
     def findkey(self, s):
         'Predict the key of a sample based on the trained SVM classifier.'
         h = histogram(s)
-        x0, _ = gen_svm_nodearray(dict((freqs.tones.index(str(n)), h[n]) for n in h)) # TODO make this into a function
+        x0, _ = gen_svm_nodearray(histtodict(h))
         return freqs.keys[int(libsvm.svm_predict(self.m, x0))]
+
+class keysvm2():
+    "Two-class SVM classifier classifying a histogram correctly if it's measured from the tonic and incorrectly otherwise."
+    
+    def __init__(self, samples):
+        'Train SVM from given set of samples.'
+        x, y = [], []
+        for s in samples:
+            h = histogram(s)
+            # for each key, classify as positive if measured from the tonic and negative otherwise
+            for i, k in enumerate(freqs.keys):
+                y.append(1 if k == s.key else -1) # correct iff measured from tonic
+                x.append(histtodict(h, i)) # measure distance of notes to key
+        prob = svm_problem(y, x)
+        param = svm_parameter('-t 1 -d 2 -v 5 -q') # quadratic kernel, in order to accept positive cone
+        self.m = libsvm.svm_train(prob, param)
+    
+    def findkey(self, s):
+        'Predict the key of a sample based on the trained SVM classifier.'
+        h = histogram(s)
+        for i, k in enumerate(freqs.keys):
+            x0, _ = gen_svm_nodearray(histtodict(h, i))
+            if libsvm.svm_predict(self.m, x0) > 0:
+                yield k
+
+def histtodict(h, i = 0):
+    'Convert histogram to dictionary with numeric keys, optionally with offset.'
+    return dict(((freqs.tones.index(str(n)) - i) % len(freqs.tones), h[n]) for n in h)
