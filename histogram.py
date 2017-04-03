@@ -45,6 +45,7 @@ class keysvm():
         x0, _ = gen_svm_nodearray(histtodict(h))
         return freqs.keys[int(libsvm.svm_predict(self.m, x0))]
 
+# too many false negatives, perhaps combine approach with keysvm
 class keysvm2():
     "Two-class SVM classifier classifying a histogram correctly if it's measured from the tonic and incorrectly otherwise."
     
@@ -55,8 +56,9 @@ class keysvm2():
             h = histogram(s)
             # for each key, classify as positive if measured from the tonic and negative otherwise
             for i, k in enumerate(freqs.keys):
-                y.append(1 if k == s.key else -1) # correct iff measured from tonic
-                x.append(histtodict(h, i)) # measure distance of notes to key
+                if k.tonic in h: # preventative measure to eliminate too many negatives
+                    y.append(1 if k == s.key else -1) # correct iff measured from tonic
+                    x.append(histtodict(h, i)) # measure distance of notes to key
         prob = svm_problem(y, x)
         param = svm_parameter('-t 1 -d 2 -v 5 -q') # quadratic kernel, in order to accept positive cone
         self.m = libsvm.svm_train(prob, param)
