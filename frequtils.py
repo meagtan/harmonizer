@@ -56,6 +56,14 @@ class Sample:
         for c in self.chords():
             yield c.pitches[voice]
     
+    # iterable overrides, may be made more efficient
+    def __iter__(self):
+        return self.chords()
+    def __len__(self):
+        return len(self.cs)
+    def __getitem__(self, key):
+        return list(self.chords())[key] # can also take slice objects
+    
     def __hash__(self):
         return hash(self.filename)
     def __eq__(self, other):
