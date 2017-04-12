@@ -12,7 +12,7 @@ def findkey(table, s):
 def loglikelihood(table, s, k):
     'Return the log-likelihood of a sample being in a particular key.'
     h = histogram(s)
-    return sum(log(table.nfreq[True, freqs.Tone(n, k)]) * h[n] for n in h)
+    return sum(log(table.nfreq[True, freqs.Tone(n, k)]) * h[n] for n in h) + log(table.kprob(k))
 
 def histogram(s):
     'Construct a pitch histogram for a sample.'
