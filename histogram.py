@@ -113,7 +113,7 @@ def modulation(table, s, n):
             k[r] = findkey(table, s[b[r][0]:b[r][1]]) # or perhaps compute k[r] from matrix product of s and w
             # calculate weights
             for t in xrange(l):
-                w[t, r] = c[r] * exp(-((t-m[r])/s) ** 2 + loglikelihood(table, s[t:t+1], k[r]) - loglikelihood(table, s[t:t+1], km))
+                w[t, r] = c[r] * exp(-((t-m[r])/v) ** 2 + loglikelihood(table, s[t:t+1], k[r]) - loglikelihood(table, s[t:t+1], km))
             # update parameters
             c[r] = sum(w[t,r] for t, r1 in w if r == r1) / sum(w[t,r1] for t, r1 in w)
             m[r] = sum(t * w[t,r] for t, r1 in w if r == r1) / sum(w[t,r] for t, r1 in w if r == r1)
