@@ -96,7 +96,7 @@ def modulation(table, s, n):
     c = [1] * n # c[r] corresponds to the class weight of region r
     m = [1] * n # m[r] corresponds to the class mean of region r
     k = [1] * n # k[r] corresponds to the most likely key for region r
-    s = 1  # s is the common class variance, initially set to 1
+    v = 1  # v is the common class variance, initially set to 1
     l = len(s.cs) # total duration of sample
     km = findkey(table, s) # key of whole piece
     
@@ -107,7 +107,7 @@ def modulation(table, s, n):
     # loop until convergence
     for _ in xrange(10): # TODO better condition, such as keys not changing
         # find b[r] from c[r] and m[r]
-        b = boundaries(c, m, s, l)
+        b = boundaries(c, m, v, l)
         for r in b:
             # calculate k[r] from b[r]
             k[r] = findkey(table, s[b[r][0]:b[r][1]]) # or perhaps compute k[r] from matrix product of s and w
@@ -118,8 +118,8 @@ def modulation(table, s, n):
             c[r] = sum(w[t,r] for t, r1 in w if r == r1) / sum(w[t,r1] for t, r1 in w)
             m[r] = sum(t * w[t,r] for t, r1 in w if r == r1) / sum(w[t,r] for t, r1 in w if r == r1)
             m1 = sum(t * w[t,r1] for t, r1 in w) / sum(w[t,r1] for t, r1 in w) # sample mean
-            s = sum((t - m1) ** 2 * w[t,r1] for t, r1 in w) / sum(w[t,r] for t, r1 in w)
-    return boundaries(c, m, s, l)
+            v = sum((t - m1) ** 2 * w[t,r1] for t, r1 in w) / sum(w[t,r] for t, r1 in w)
+    return boundaries(c, m, v, l)
 
 def boundaries(c, m, s, l):
     'Calculate region boundaries from region means and weights.'
