@@ -127,7 +127,7 @@ def boundaries(c, m, s, l):
         'Linear discriminant for classifying a time instant to a region.'
         return 2 * m[r] * t - m[r] ** 2 + s ** 2 * log(c[r])
     def intersect(r, r1):
-        'The time the discriminants of two regions intersect.'
+        'The time the discriminants of two different regions intersect.'
         # 2(m[r]-m[r1])t - m[r]^2 + m[r1]^2 + s^2 log(c[r]/c[r1]) = 0
         return (m[r] + m[r1]) / 2 - s ** 2 * log(c[r]/c[r1]) / (2 * (m[r] - m[r1]))
     b = {}
@@ -139,8 +139,10 @@ def boundaries(c, m, s, l):
     while t < l:
         # find the region first to overcome the discriminant of the current region and set it to the next region
         # perhaps optimize this through dynamic programming
-        r1, t1 = min((r1, intersect(r, r1)) for r1 in xrange(n) if intersect(r, r1) > t, key = lambda a: a[1])
+        try:
+            t1, r1 = min(((intersect(r, r1), r1) for r1 in xrange(n) if r != r1 and intersect(r, r1) > t))
+        except ValueError: # empty iterator
+            t1, r1 = l, r
         b[r] = t, t1
         r, t = r1, t1
-    b[r] = t, l - 1
     return b
