@@ -1,9 +1,10 @@
 ### Histogram analysis for easier recognition of keys, chords, themes, etc.
 
 import freqs
-from music21 import pitch
+from music21 import *
 from math import *
 from svmutil import * # for keysvm, requires libsvm
+from operator import concat
 
 def findkey(table, s):
     'Return the most likely key of a sample, given probability table.'
@@ -96,8 +97,9 @@ def modulation(table, s, n):
     c = [1] * n # c[r] corresponds to the class weight of region r
     m = [1] * n # m[r] corresponds to the class mean of region r
     k = [1] * n # k[r] corresponds to the most likely key for region r
-    v = 1  # v is the common class variance, initially set to 1
-    l = len(s.cs) # total duration of sample
+    v = 1  # v is the common class variance, initially irrelevant and set to 1
+    ms = list(m.notes for m in s.cs if isinstance(m, stream.Measure) # list of measures, simplify late
+    l = len(ms) # total duration of sample
     km = findkey(table, s) # key of whole piece
     
     # initially, divide sample evenly
@@ -105,20 +107,24 @@ def modulation(table, s, n):
         m[r] = (r + 0.5) * l / n
     
     # loop until convergence
-    for _ in xrange(10): # TODO better condition, such as keys not changing
+    for _ in xrange(10): # TODO better condition, such as regions not changing
         # find b[r] from c[r] and m[r]
         b = boundaries(c, m, v, l)
         for r in b:
             # calculate k[r] from b[r]
-            k[r] = findkey(table, s[b[r][0]:b[r][1]]) # or perhaps compute k[r] from matrix product of s and w
-            # calculate weights
-            for t in xrange(l):
-                w[t, r] = c[r] * exp(-((t-m[r])/v) ** 2 + loglikelihood(table, s[t:t+1], k[r]) - loglikelihood(table, s[t:t+1], km))
-            # update parameters
-            c[r] = sum(w[t,r] for t, r1 in w if r == r1) / sum(w[t,r1] for t, r1 in w)
+            k[r] = findkey(table, reduce(concat, ms[b[r][0]:b[r][1]])) # or perhaps compute k[r] from matrix product of s and w
+        # calculate weights
+        for t in xrange(l):
+            rs = dict((r, exp(-(t-m[r]) ** 2 / v + log(c[r]) + loglikelihood(table, ms[t], k[r]))) for r in b)
+            rm = max(rs, lambda r: rs[r])
+            # rsum = sum(rs[r] for r in rs)
+            for r in b:
+                w[t, r] = float(r == rm) # approximation for rs[r] / rsum
+        # update parameters
+        for r in b:
+            c[r] = sum(w[t,r] for t, r1 in w if r == r1) / sum(w[t,r1] for t, r1 in w if r in b)
             m[r] = sum(t * w[t,r] for t, r1 in w if r == r1) / sum(w[t,r] for t, r1 in w if r == r1)
-            m1 = sum(t * w[t,r1] for t, r1 in w) / sum(w[t,r1] for t, r1 in w) # sample mean
-            v = sum((t - m1) ** 2 * w[t,r1] for t, r1 in w) / sum(w[t,r] for t, r1 in w)
+            v = sum((t - m[r]) ** 2 * w[t,r1] for t, r1 in w if r in b) / sum(w[t,r] for t, r1 in w if r == r1)
     return boundaries(c, m, v, l)
 
 def boundaries(c, m, s, l):
