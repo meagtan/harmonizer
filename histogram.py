@@ -124,7 +124,7 @@ def modulation(table, s, n):
         for r in b:
             c[r] = sum(w[t,r] for t, r1 in w if r == r1) / sum(w[t,r1] for t, r1 in w if r in b)
             m[r] = sum(t * w[t,r] for t, r1 in w if r == r1) / sum(w[t,r] for t, r1 in w if r == r1)
-            v = sum((t - m[r]) ** 2 * w[t,r1] for t, r1 in w if r in b) / sum(w[t,r] for t, r1 in w if r == r1)
+        v = sum((t - m[r1]) ** 2 * w[t,r1] for t, r1 in w if r1 in b) / sum(w[t,r1] for t, r1 in w if r1 in b)
     return boundaries(c, m, v, l)
 
 def boundaries(c, m, s, l):
