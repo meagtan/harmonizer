@@ -6,6 +6,7 @@
 # The most likely key within a region is optimized by looking at the histogram of the region.
 
 from histogram import *
+from math import *
 from operator import concat
 
 def modulation(table, s, n):
@@ -33,7 +34,7 @@ def modulation(table, s, n):
         for r in b:
             # calculate k[r] from b[r]
             # Stream.measures too slow, creating new object
-            k[r], lk = findkey(table, reduce(concat, ms[b[r][0]:b[r][1]])) # or perhaps compute k[r] from matrix product of s and w
+            lk, k[r] = findkey(table, reduce(concat, ms[b[r][0]:b[r][1]])) # or perhaps compute k[r] from matrix product of s and w
             ls += lk
         # break if likelihood decreases
         if lp and ls < lp:
