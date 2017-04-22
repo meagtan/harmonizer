@@ -4,11 +4,10 @@ import freqs
 from music21 import *
 from math import *
 from svmutil import * # for keysvm, requires libsvm
-from operator import concat
 
 def findkey(table, s):
     'Return the most likely key of a sample, given probability table.'
-    return max(freqs.keys, key = lambda k: loglikelihood(table, s, k))
+    return max((loglikelihood(table, s, k), k) for k in freqs.keys)
 
 def loglikelihood(table, s, k):
     'Return the log-likelihood of a sample being in a particular key.'
