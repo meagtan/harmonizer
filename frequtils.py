@@ -37,19 +37,24 @@ class Sample:
     '''
     def __init__(self, filename):
         self.filename = filename
-        self.cs = corpus.parse(filename).chordify()
+        self.s = converter.parse(filename)
+        self.cs = self.s.chordify()
         ks = self.cs.getKeySignatures()[0]
         
         self.key = key.Key(ks.getScale().tonic, ks.mode)
         self.vel = None # TODO change this, perhaps use qualities other than vel, such as measure ends
+        
+    def measures(self):
+        'Iterates through each measure of sample.'
+        for m in self.cs:
+            if isinstance(m, stream.Measure):
+                yield m
     
     def chords(self):
         'Iterates through each chord of sample.'
-        for m in self.cs:
-            # parse each chord as a list of notes, keeping ties in mind
-            if isinstance(m, stream.Measure):
-                for c in m.notes: # cannot call notes directly apparently
-                    yield c
+        for m in self.measures():
+            for c in m.notes: # cannot call notes directly apparently
+                yield c
     
     def notes(self, voice):
         'Iterates through each note in sample at a given voice.'
