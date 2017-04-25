@@ -7,7 +7,7 @@
 
 from histogram import *
 from math import *
-from operator import concat
+from itertools import chain
 
 def modulation(table, s, n):
     '''
@@ -19,6 +19,7 @@ def modulation(table, s, n):
     k = [None] * n  # k[r] corresponds to the most likely key for region r
     v = 1           # v is the common class variance, initially irrelevant and set to 1
     ms = list(list(m.notes) for m in s.measures()) # list of measures, simplify later
+    hs = map(histogram, hs) # histograms of each measure
     l = len(ms)     # total duration of sample
     
     # initially, divide sample evenly
@@ -34,16 +35,16 @@ def modulation(table, s, n):
         for r in b:
             # calculate k[r] from b[r]
             # Stream.measures too slow, creating new object
-            lk, k[r] = findkey(table, reduce(concat, ms[b[r][0]:b[r][1]])) # or perhaps compute k[r] from matrix product of s and w
+            lk, k[r] = findkey(table, chain(ms[b[r][0]:b[r][1]])) # or perhaps compute k[r] from matrix product of s and w
             ls += lk
         # break if likelihood decreases
-        if lp and ls < lp:
+        if lp and ls <= lp:
             return b1
         # calculate weights
         for t in xrange(l):
-            rs = dict((r, exp(-(t-m[r]) ** 2 / v + log(c[r]) + loglikelihood(table, ms[t], k[r]))) for r in b)
-            # rm = max(rs, lambda r: rs[r])
-            rsum = sum(rs[r] for r in rs)
+            rs = list(exp(-(t-m[r]) ** 2 / v + log(c[r]) + loglikelihood(table, hs[t], k[r])) for r in b)
+            # rm = max(b, lambda r: rs[r])
+            rsum = sum(rs[r] for r in b)
             for r in b:
                 w[t, r] = rs[r] / rsum # float(r == rm) # approximation for rs[r] / rsum
         # update parameters
@@ -79,3 +80,9 @@ def boundaries(c, m, s, l):
         b[r] = t, t1
         r, t = r1, t1
     return b
+
+def concatiter(iters):
+    'Concatenate iterators.'
+    for i in iters:
+        for j in i:
+            yield j
