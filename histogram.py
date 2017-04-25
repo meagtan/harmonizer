@@ -7,11 +7,13 @@ from svmutil import * # for keysvm, requires libsvm
 
 def findkey(table, s):
     'Return the most likely key of a sample, given probability table.'
-    return max((loglikelihood(table, s, k), k) for k in freqs.keys)
-
-def loglikelihood(table, s, k):
-    'Return the log-likelihood of a sample being in a particular key.'
     h = histogram(s)
+    return max((loglikelihood(table, h, k), k) for k in freqs.keys)
+
+def loglikelihood(table, h, k):
+    'Return the log-likelihood of a histogram being in a particular key.'
+    if not isinstance(h, freqs.Freq):
+        h = histogram(h)
     return sum(log(table.nfreq[True, freqs.Tone(n, k)]) * h[n] for n in h) + log(table.kprob(k))
 
 def histogram(s):
