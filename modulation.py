@@ -35,7 +35,7 @@ def modulation(table, s, n):
         for r in b:
             # calculate k[r] from b[r]
             # Stream.measures too slow, creating new object
-            lk, k[r] = findkey(table, chain(ms[b[r][0]:b[r][1]])) # or perhaps compute k[r] from matrix product of s and w
+            lk, k[r] = findkey(table, chain(*ms[b[r][0]:b[r][1]])) # or perhaps compute k[r] from matrix product of s and w
             ls += lk
         # break if likelihood decreases
         if lp and ls <= lp:
@@ -80,9 +80,3 @@ def boundaries(c, m, s, l):
         b[r] = t, t1
         r, t = r1, t1
     return b
-
-def concatiter(iters):
-    'Concatenate iterators.'
-    for i in iters:
-        for j in i:
-            yield j
