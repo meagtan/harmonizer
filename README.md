@@ -33,3 +33,16 @@ We may also use this key model to partition a piece of music into several region
 P((n_t)) = ∏_t P(n_t) = ∏_t (Σ_r P(r) P(n_t|r)) = ∏_t (Σ_r P(r) P(t|r) P(n_t|k(r)))
 ```
 where k(r) is the MAP estimate of the key for region r. This likelihood can then be maximized for the model parameters using the EM algorithm, as implemented in [histogram.py](histogram.py).
+
+Below is a demonstration of how the EM algorithm works to iteratively discover optimal decision boundaries for regions, for two pieces of music with very different frequencies of modulation: Bach's *Chaconne in D minor*, and Beethoven's *Grosse Fuge in B-flat major*. The weighted normal distributions plotted in black depict the probability distributions of each region, whose boundaries are delimited by the intersections between each consecutive distribution, plotted in relation to measure number. Different colors represent different keys. The algorithm continues iterating until the likelihood decreases or stays the same, due to approximations or decreasing variance, and returns the segmentation with the greatest likelihood.
+
+<div class="emgifs">
+  <figure>
+    <img src="https://gist.github.com/meagtan/019fda9f8643174450cf218d926373b9/raw/6b0f260613e701342d0ef97ebfd9808fa7e3bf4a/chac7.gif" width="400"/> 
+    <figcaption>Chaconne. Red = D minor, green = D major.</figcaption>
+  </figure>
+  <figure>
+    <img src="https://gist.github.com/meagtan/019fda9f8643174450cf218d926373b9/raw/6b0f260613e701342d0ef97ebfd9808fa7e3bf4a/fug20.gif" width="400"/>
+    <figcaption>Grosse Fuge. Blue = G major, green = F major, red = B-flat major, cyan = G-flat major, magenta = F minor, yellow = C minor, black = A-flat major.</figcaption>
+  </figure>
+</div>
