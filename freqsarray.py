@@ -6,30 +6,51 @@ import numpy as np
 tones = [n + a for n in 'CDEFGABcdefgab' for a in ['-', '#', '']]
 keys = map(key.Key, tones)
 chords = [chord.Chord(map(k.pitches.__getitem__, [0, 2, 4])) for k in keys]
-notes = [n for n in tones if isupper(n[0])]
+notes = [n for n in tones if n[0].isupper()]
 K, C, N = len(keys), len(chords), len(notes)
 
-F = 7*5*4*2
-T = 7*5
+F = 7*7*4*2
+T = 7*7
 
 # vectorize these
 
 def Func(chord, key):
     try:
-        num = (chord.root().diatonicNoteNum - key.tonic.diatonicNoteNum) % 7
-        acc = (chord.root().ps - key.pitches[num].ps + 2) % 12 # assuming only 5 different types of accidentals occur
+        num = int(chord.root().diatonicNoteNum - key.tonic.diatonicNoteNum) % 7
+        acc = int(chord.root().ps - key.pitches[num].ps + 3) % 12 # assuming only 5 different types of accidentals occur
         
-        return np.ravel_multi_index((num, acc, chord.quality, key.mode), (7, 5, 4, 2)) # TODO take care of other qualities
+        return np.ravel_multi_index((num, acc, chord.quality, key.mode), (7, 7, 4, 2)) # TODO take care of other qualities
     except AttributeError:
-        return ()
+        return -1
 
-def Tone(note, key):
+def Tone(note, key=key.Key('C')): # if no key, use absolute value
     try:
-        num = (note.diatonicNoteNum - key.tonic.diatonicNoteNum) % 7
-        acc = (note.ps - key.pitches[num].ps + 2) % 12
-        return np.ravel_multi_index((num, acc), (7, 5)) # store accidental
-    except AttributeError:
-        return ()
+        num = int(note.diatonicNoteNum - key.tonic.diatonicNoteNum) % 7
+        acc = int(note.ps - key.pitches[num].ps + 3) % 12
+        return np.ravel_multi_index((num, acc), (7, 7)) # store accidental
+    except:
+        return -1
+
+def Pitch(tone, key=key.Key('C')):
+    try:
+        num, acc = np.unravel_index(tone, (7,7))
+        p = key.pitches[num]
+        return pitch.Pitch(p.name[0], accidental=p.alter+acc-3)
+    except:
+        return None
+
+abs2func = np.array([[Tone(Pitch(t, k)) for t in xrange(T)] for k in keys])
+func2abs = np.array([[Tone(Pitch(t), k) for t in xrange(T)] for k in keys])
+def transpose(hist, key, tofunc=True):
+    'Transpose histogram of absolute tones to tones in a given key.'
+    if tofunc:
+        arr = abs2func[keys.index(key)]
+    else:
+        arr = func2abs[keys.index(key)]
+    return hist[arr]*(arr!=-1)
+
+def Key(key):
+    return keys.index(key)
 
 class Sample:
     '''
@@ -38,20 +59,29 @@ class Sample:
     def __init__(self, filename):
         self.filename = filename
         self.s = converter.parse(filename)
-        # self.cs = self.s.chordify()
+        self.cs = self.s.flat.notesAndRests.stream().chordify()
         
         self.key = self.s.analyze('krumhansl')
         self.vel = None # TODO change this, perhaps use qualities other than vel, such as measure ends
         self.matrix = None
         
-    # TODO function converting sample into TxN matrix of notes + Tx1 array of absolute durations
+    # function converting sample into TxN matrix of notes + Tx1 array of absolute durations
     def get_matrix(self):
         if self.matrix is None:
-            # TODO create matrix
-            # do not use Func and Tone, instead store absolute note values
-            # likelihoods however should use them for symmetry
-            pass
-        return self.matrix
+            endtimes = self.cs._uniqueOffsetsAndEndTimes(endTimesOnly=True)
+            l = len(endtimes)
+            self.matrix = np.zeros((l,T))
+            self.ts = np.zeros(l)
+            t0 = 0
+            for i, t in enumerate(endtimes):
+                a = self.cs.getElementsByOffset(t0, t, includeEndBoundary=False)
+                assert len(a) == 1
+                if isinstance(a[0], chord.Chord):
+                    for p in a[0].pitches:
+                        self.matrix[i, Tone(p)] += t - t0
+                self.ts[i] = (t0 + t)/2
+                t0 = t
+        return self.matrix, self.ts
     
     def measures(self):
         'Iterates through each measure of sample.'
@@ -94,21 +124,25 @@ class Stats:
     Stores counts of chords, notes, transitions, etc.
     '''
     def __init__(self, sample=None):
-        self.cs = np.ndarray((C,))
-        self.ts = np.ndarray((C,C))
-        self.ns = np.ndarray((N,))
-        self.vs = np.ndarray((N,N))
-        self.ks = np.ndarray((K,))
+        self.cs = np.zeros((C,))
+        self.ts = np.zeros((C,C))
+        self.ns = np.zeros((T,))
+        self.vs = np.zeros((T,T))
+        self.ks = np.zeros((K,))
         
         if sample is not None:
-            # TODO construct stats from sample matrix
-            pass
+            # construct stats from sample matrix
+            self.ks[Key(sample.key)] += 1
+            # construct note histogram
+            m = sample.get_matrix()[0].sum(axis=0)
+            self.ns += transpose(m, sample.key)
+            # TODO handle the rest of the arrays
         
     def __add__(self, other):
         res = Stats()
         res.cs = self.cs + other.cs
         res.ts = self.ts + other.ts
-        res.hs = self.hs + other.hs
+        res.ns = self.ns + other.ns
         res.vs = self.vs + other.vs
         res.ks = self.ks + other.ks
         return res
