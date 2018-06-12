@@ -56,10 +56,13 @@ class Sample:
     '''
     A processed sample chorale containing a list of chords, with optionally specified harmonic velocity.
     '''
-    def __init__(self, filename):
+    def __init__(self, filename, fromCorpus=False):
         self.filename = filename
-        self.s = converter.parse(filename)
-        self.cs = self.s.flat.notesAndRests.stream().chordify()
+        if fromCorpus:
+            self.s = corpus.parse(filename)
+        else:
+            self.s = converter.parse(filename)
+        # self.cs = self.s.flat.notesAndRests.stream().chordify()
         
         self.key = self.s.analyze('krumhansl')
         self.vel = None # TODO change this, perhaps use qualities other than vel, such as measure ends
@@ -68,17 +71,20 @@ class Sample:
     # function converting sample into TxN matrix of notes + Tx1 array of absolute durations
     def get_matrix(self):
         if self.matrix is None:
-            endtimes = self.cs._uniqueOffsetsAndEndTimes(endTimesOnly=True)
+            s = self.s.flat.notesAndRests.stream()
+            endtimes = s._uniqueOffsetsAndEndTimes(endTimesOnly=True)
             l = len(endtimes)
             self.matrix = np.zeros((l,T))
             self.ts = np.zeros(l)
             t0 = 0
             for i, t in enumerate(endtimes):
-                a = self.cs.getElementsByOffset(t0, t, includeEndBoundary=False)
-                assert len(a) == 1
-                if isinstance(a[0], chord.Chord):
-                    for p in a[0].pitches:
-                        self.matrix[i, Tone(p)] += t - t0
+                a = s.getElementsByOffset(t0, t, includeEndBoundary=False)
+                for n in a:
+                    if isinstance(n, chord.Chord):
+                        for p in n.pitches:
+                            self.matrix[i, Tone(p)] += t - t0
+                    elif isinstance(n, note.Note):
+                        self.matrix[i, Tone(n.pitch)] += t - t0
                 self.ts[i] = (t0 + t)/2
                 t0 = t
         return self.matrix, self.ts
