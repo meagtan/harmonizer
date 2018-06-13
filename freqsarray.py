@@ -166,12 +166,13 @@ class Env:
         self.stats = Stats()
         self.samples = dict()
     
-    def train(self, filenames):
+    def train(self, filenames, verbose=False):
         'Train probabilities from given iterator of filenames, for example corpus.getBachChorales().'
         for f in filenames:
             s = Sample(f)
             if s not in self.samples:
-                print 'Processing %s...' % f
+                if verbose:
+                    print 'Processing %s...' % f
                 self.process(s)
     
     def process(self, sample):
