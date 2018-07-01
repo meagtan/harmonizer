@@ -14,7 +14,7 @@ T = 7*7
 
 # vectorize these
 
-def Func(chord, key):
+def Func(chord, key=key.Key('C')):
     try:
         num = int(chord.root().diatonicNoteNum - key.tonic.diatonicNoteNum) % 7
         acc = int(chord.root().ps - key.pitches[num].ps + 3) % 12 # assuming only 5 different types of accidentals occur
@@ -22,6 +22,11 @@ def Func(chord, key):
         return np.ravel_multi_index((num, acc, chord.quality, key.mode), (7, 7, 4, 2)) # TODO take care of other qualities
     except AttributeError:
         return -1
+
+def Chord(func, key=key.Key('C')):
+    num, acc, qual, mode = np.unravel_index(func, (7,7,4,2))
+    root = Pitch(np.ravel_multi_index((num, acc), (7, 7)), key)
+    # TODO
 
 def Tone(note, key=key.Key('C')): # if no key, use absolute value
     try:
@@ -39,15 +44,17 @@ def Pitch(tone, key=key.Key('C')):
     except:
         return None
 
-abs2func = np.array([[Tone(Pitch(t, k)) for t in xrange(T)] for k in keys])
-func2abs = np.array([[Tone(Pitch(t), k) for t in xrange(T)] for k in keys])
-def transpose(hist, key, tofunc=True):
+abs2func_tone = np.array([[Tone(Pitch(t, k)) for t in xrange(T)] for k in keys])
+func2abs_tone = np.array([[Tone(Pitch(t), k) for t in xrange(T)] for k in keys])
+def transpose_tone(hist, key, tofunc=True):
     'Transpose histogram of absolute tones to tones in a given key.'
     if tofunc:
-        arr = abs2func[keys.index(key)]
+        arr = abs2func_tone[keys.index(key)]
     else:
-        arr = func2abs[keys.index(key)]
+        arr = func2abs_tone[keys.index(key)]
     return hist[arr]*(arr!=-1)
+
+
 
 def Key(key):
     return keys.index(key)
@@ -140,9 +147,12 @@ class Stats:
             # construct stats from sample matrix
             self.ks[Key(sample.key)] += 1
             # construct note histogram
-            m = sample.get_matrix()[0].sum(axis=0)
-            self.ns += transpose(m, sample.key)
+            m = sample.get_matrix()[0]
+            self.ns += transpose(m.sum(axis=0), sample.key)
             # TODO handle the rest of the arrays
+            for t in xrange(m.shape[0]):
+                c = chord.Chord(
+                self.cs[c] += 1
         
     def __add__(self, other):
         res = Stats()
