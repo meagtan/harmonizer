@@ -5,26 +5,27 @@ import numpy as np
 
 tones = [n + a for n in 'CDEFGABcdefgab' for a in ['-', '#', '']]
 keys = map(key.Key, tones)
-chords = [chord.Chord(map(k.pitches.__getitem__, [0, 2, 4])) for k in keys]
+chords = [chord.Chord(map(k.pitches.__getitem__, [0, 2, 4])) for k in keys] # TODO does not include diminished
 notes = [n for n in tones if n[0].isupper()]
 K, C, N = len(keys), len(chords), len(notes)
 
-F = 7*7*4*2
-T = 7*7
+C = F = 7*7*4
+N = T = 7*7
 
 # vectorize these
+# may also use music21.roman later
 
 def Func(chord, key=key.Key('C')):
     try:
         num = int(chord.root().diatonicNoteNum - key.tonic.diatonicNoteNum) % 7
         acc = int(chord.root().ps - key.pitches[num].ps + 3) % 12 # assuming only 5 different types of accidentals occur
-        
-        return np.ravel_multi_index((num, acc, chord.quality, key.mode), (7, 7, 4, 2)) # TODO take care of other qualities
+        qual = ['major','minor','diminished','augmented', 'other'].index(chord.quality) % 4
+        return np.ravel_multi_index((num, acc, qual), (7, 7, 4))
     except AttributeError:
         return -1
 
 def Chord(func, key=key.Key('C')):
-    num, acc, qual, mode = np.unravel_index(func, (7,7,4,2))
+    num, acc, qual = np.unravel_index(func, (7,7,4))
     root = Pitch(np.ravel_multi_index((num, acc), (7, 7)), key)
     # TODO
 
@@ -54,6 +55,12 @@ def transpose_tone(hist, key, tofunc=True):
         arr = func2abs_tone[keys.index(key)]
     return hist[arr]*(arr!=-1)
 
+# matrices converting absolute notes/chords to functions in a key
+C = F
+# chord2func = np.array([[np.arange(F)==Func(Chord(f, k)) for f in xrange(F)] for k in keys])
+# func2chord = np.array([[np.arange(F)==Func(Chord(f), k) for f in xrange(F)] for k in keys])
+# pitch2tone = np.array([[np.arange(T)==Tone(Pitch(t, k)) for t in xrange(T)] for k in keys])
+# tone2pitch = np.array([[np.arange(T)==Tone(Pitch(t), k) for t in xrange(T)] for k in keys])
 
 
 def Key(key):
@@ -137,29 +144,47 @@ class Stats:
     Stores counts of chords, notes, transitions, etc.
     '''
     def __init__(self, sample=None):
-        self.cs = np.zeros((C,))
-        self.ts = np.zeros((C,C))
+        self.cs = np.zeros((2,C)) # np.zeros((C,))
+        self.ts = np.zeros((2,F,F)) # np.zeros((C,C)) # no of transitions between each two functions, for each key mode
         self.ns = np.zeros((T,))
+        self.es = np.zeros((2,T,F)) # instances of each tone in a chord, for each key mode
         self.vs = np.zeros((T,T))
         self.ks = np.zeros((K,))
+        # self.ts = np.zeros((2,F,F)) # no of transitions between each two functions, for each key mode
+        # self.ns = np.zeros((2,F,T)) # instances of each tone in a chord, for each key mode
+        # self.cs may store initial chords for each key
         
         if sample is not None:
             # construct stats from sample matrix
             self.ks[Key(sample.key)] += 1
             # construct note histogram
             m = sample.get_matrix()[0]
-            self.ns += transpose(m.sum(axis=0), sample.key)
+            self.ns += transpose_tone(m.sum(axis=0), sample.key) # remove later
             # TODO handle the rest of the arrays
+            c1 = None
             for t in xrange(m.shape[0]):
-                c = chord.Chord(
-                self.cs[c] += 1
-        
+                # infer which chord is active
+                notes = [Pitch(n) for n in m[t].nonzero()[0]]
+                if len(notes) == 0:
+                    continue
+                c = chord.Chord(notes)
+                # if t % 50 == 0:
+                #     print c, m[t].sum(), Func(c, sample.key), Chord(Func(c, sample.key), sample.key)
+                if c1 is None:
+                    self.cs[int(sample.key.mode == 'major'), Func(c,sample.key)] += m[t].sum()
+                else: # may distribute 'other' chords to every other mode
+                    self.ts[int(sample.key.mode == 'major'), Func(c1,sample.key), Func(c,sample.key)] += m[t].sum() 
+                for n in notes:
+                    self.es[int(sample.key.mode == 'major'), Tone(n,sample.key), Func(c,sample.key)] += m[t,Tone(n)]
+                c1 = c
+   
     def __add__(self, other):
         res = Stats()
         res.cs = self.cs + other.cs
         res.ts = self.ts + other.ts
         res.ns = self.ns + other.ns
         res.vs = self.vs + other.vs
+        res.es = self.es + other.es
         res.ks = self.ks + other.ks
         return res
     
